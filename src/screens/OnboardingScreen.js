@@ -7,15 +7,16 @@ import {
   TouchableOpacity,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { colors } from "../constants/theme";
 
-const BRAND = "#0A5C36";
+const BRAND = colors.primary;
 
 /** The four pillars of the product, in pitch order. */
 const FEATURES = [
   {
     key: "tracking",
     glyph: "⚡",
-    accent: "#0A5C36",
+    accent: colors.primary,
     title: "سجل مصروفك فـ أقل من 5 ثواني",
     subtitle: "Suivi ultra-rapide",
     body: "زيد المصروف بالدارجة ولا بالفرنسية بضغطة وحدة. بلا جداول، بلا تعقيد — كتب «قهوة 12 درهم» وصافي.",
@@ -123,7 +124,7 @@ export default function OnboardingScreen({ onCreateAccount, onLogin }) {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#FFFFFF" },
+  container: { flex: 1, backgroundColor: colors.surface },
   content: { paddingBottom: 24 },
 
   hero: {
@@ -140,7 +141,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-  logoText: { color: "#FFFFFF", fontSize: 32, fontWeight: "bold" },
+  logoText: { color: colors.onPrimary, fontSize: 32, fontWeight: "bold" },
   brand: {
     fontSize: 26,
     fontWeight: "bold",
@@ -151,16 +152,16 @@ const styles = StyleSheet.create({
   tagline: {
     fontSize: 19,
     fontWeight: "600",
-    color: "#2C3E50",
+    color: colors.text,
     textAlign: "center",
     marginTop: 10,
     lineHeight: 28,
   },
-  taglineFr: { fontSize: 14, fontWeight: "500", color: "#95A5A6" },
+  taglineFr: { fontSize: 14, fontWeight: "500", color: colors.textMuted },
   heroBody: {
     fontSize: 14,
     lineHeight: 23,
-    color: "#7F8C8D",
+    color: colors.textSecondary,
     textAlign: "center",
     marginTop: 14,
   },
@@ -168,7 +169,7 @@ const styles = StyleSheet.create({
   features: { paddingHorizontal: 20 },
   featureCard: {
     flexDirection: "row-reverse",
-    backgroundColor: "#F8F9FA",
+    backgroundColor: colors.surfaceMuted,
     borderRadius: 16,
     padding: 16,
     marginBottom: 12,
@@ -186,7 +187,7 @@ const styles = StyleSheet.create({
   featureTitle: {
     fontSize: 16,
     fontWeight: "bold",
-    color: "#2C3E50",
+    color: colors.text,
     textAlign: "right",
   },
   featureSubtitle: {
@@ -198,14 +199,14 @@ const styles = StyleSheet.create({
   featureText: {
     fontSize: 13,
     lineHeight: 21,
-    color: "#7F8C8D",
+    color: colors.textSecondary,
     marginTop: 7,
     textAlign: "right",
   },
 
   footnote: {
     fontSize: 12,
-    color: "#B2BEC3",
+    color: colors.textFaint,
     textAlign: "center",
     marginTop: 8,
   },
@@ -215,8 +216,8 @@ const styles = StyleSheet.create({
     paddingTop: 12,
     paddingBottom: 8,
     borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: "#ECF0F1",
-    backgroundColor: "#FFFFFF",
+    borderTopColor: colors.divider,
+    backgroundColor: colors.surface,
   },
   primaryButton: {
     backgroundColor: BRAND,
@@ -224,7 +225,7 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
     alignItems: "center",
   },
-  primaryButtonText: { color: "#FFFFFF", fontSize: 15, fontWeight: "bold" },
+  primaryButtonText: { color: colors.onPrimary, fontSize: 15, fontWeight: "bold" },
   secondaryButton: {
     borderRadius: 14,
     paddingVertical: 14,

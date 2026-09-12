@@ -113,6 +113,27 @@ function sameDay(a, b) {
 }
 
 /**
+ * Stable "YYYY-MM-DD" for an API timestamp as seen in the user's timezone —
+ * the key transactions are grouped by on the dashboard. Deriving it in the
+ * user's zone (not the device's, and not UTC) is what keeps a late-evening
+ * transaction in the day the user actually made it.
+ */
+export function zonedDayKey(iso, timeZone) {
+  if (!iso) {
+    return null;
+  }
+
+  const date = new Date(iso);
+  if (Number.isNaN(date.getTime())) {
+    return null;
+  }
+
+  const { year, month, day } = calendarParts(date, timeZone);
+  const pad = (value) => String(value).padStart(2, "0");
+  return `${year}-${pad(month)}-${pad(day)}`;
+}
+
+/**
  * "اليوم" / "أمس" for the two most recent days, otherwise "9 شتنبر 2026".
  * Returns "" for a missing or unparseable value so a row never renders "NaN".
  */

@@ -11,11 +11,12 @@ import {
   ScrollView,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { colors } from "../constants/theme";
 import { isRetryableError } from "../services/api";
 import { useAuth } from "../context/AuthContext";
 import { describeAuthError } from "../services/auth";
 
-const BRAND = "#0A5C36";
+const BRAND = colors.primary;
 // Mirrors the API's `min:8` rule so the user is told before a round trip.
 const MIN_PASSWORD_LENGTH = 8;
 
@@ -123,7 +124,7 @@ export default function RegisterScreen({ navigation }) {
           <TextInput
             style={styles.input}
             placeholder="الاسم الكامل"
-            placeholderTextColor="#B2BEC3"
+            placeholderTextColor={colors.textFaint}
             value={name}
             onChangeText={setName}
             autoCapitalize="words"
@@ -135,7 +136,7 @@ export default function RegisterScreen({ navigation }) {
           <TextInput
             style={styles.input}
             placeholder="you@example.com"
-            placeholderTextColor="#B2BEC3"
+            placeholderTextColor={colors.textFaint}
             value={email}
             onChangeText={setEmail}
             keyboardType="email-address"
@@ -148,7 +149,7 @@ export default function RegisterScreen({ navigation }) {
           <TextInput
             style={styles.input}
             placeholder={`${MIN_PASSWORD_LENGTH} حروف على الأقل`}
-            placeholderTextColor="#B2BEC3"
+            placeholderTextColor={colors.textFaint}
             value={password}
             onChangeText={setPassword}
             secureTextEntry
@@ -160,7 +161,7 @@ export default function RegisterScreen({ navigation }) {
           <TextInput
             style={styles.input}
             placeholder="••••••••"
-            placeholderTextColor="#B2BEC3"
+            placeholderTextColor={colors.textFaint}
             value={confirmation}
             onChangeText={setConfirmation}
             secureTextEntry
@@ -178,7 +179,7 @@ export default function RegisterScreen({ navigation }) {
           >
             {loading ? (
               <View style={styles.buttonLoading}>
-                <ActivityIndicator color="#FFFFFF" />
+                <ActivityIndicator color={colors.onPrimary} />
                 <Text style={styles.buttonLoadingText}>كنصاوبو الحساب…</Text>
               </View>
             ) : (
@@ -201,7 +202,7 @@ export default function RegisterScreen({ navigation }) {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#FFFFFF" },
+  container: { flex: 1, backgroundColor: colors.surface },
   flex: { flex: 1 },
   content: { flexGrow: 1, justifyContent: "center", padding: 24 },
 
@@ -215,21 +216,21 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 24,
     fontWeight: "bold",
-    color: "#2C3E50",
+    color: colors.text,
     textAlign: "center",
     marginTop: 18,
   },
   subtitle: {
     fontSize: 14,
-    color: "#95A5A6",
+    color: colors.textMuted,
     textAlign: "center",
     marginTop: 6,
     marginBottom: 24,
   },
 
   error: {
-    backgroundColor: "#FDECEA",
-    color: "#C0392B",
+    backgroundColor: colors.dangerSurface,
+    color: colors.dangerText,
     borderRadius: 10,
     padding: 12,
     fontSize: 13,
@@ -240,19 +241,19 @@ const styles = StyleSheet.create({
   label: {
     fontSize: 13,
     fontWeight: "600",
-    color: "#7F8C8D",
+    color: colors.textSecondary,
     textAlign: "right",
     marginBottom: 6,
   },
   input: {
-    backgroundColor: "#F8F9FA",
+    backgroundColor: colors.surfaceMuted,
     borderWidth: 1,
-    borderColor: "#E4E9EC",
+    borderColor: colors.border,
     borderRadius: 12,
     paddingHorizontal: 16,
     paddingVertical: 14,
     fontSize: 15,
-    color: "#2C3E50",
+    color: colors.text,
     marginBottom: 16,
     textAlign: "right",
   },
@@ -265,10 +266,10 @@ const styles = StyleSheet.create({
     marginTop: 6,
   },
   buttonDisabled: { opacity: 0.7 },
-  buttonText: { color: "#FFFFFF", fontSize: 16, fontWeight: "bold" },
+  buttonText: { color: colors.onPrimary, fontSize: 16, fontWeight: "bold" },
   buttonLoading: { flexDirection: "row-reverse", alignItems: "center" },
   buttonLoadingText: {
-    color: "#FFFFFF",
+    color: colors.onPrimary,
     fontSize: 15,
     fontWeight: "600",
     marginRight: 10,
@@ -279,6 +280,6 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     marginTop: 22,
   },
-  linkMuted: { fontSize: 14, color: "#95A5A6" },
+  linkMuted: { fontSize: 14, color: colors.textMuted },
   link: { fontSize: 14, color: BRAND, fontWeight: "bold" },
 });

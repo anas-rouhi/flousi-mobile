@@ -7,7 +7,6 @@ import React, {
   useRef,
   useState,
 } from "react";
-import { isRetryableError } from "../services/api";
 import {
   clearSession,
   fetchMe,
@@ -68,18 +67,25 @@ export function AuthProvider({ children }) {
           setUser(fresh);
         }
       } catch (error) {
-        if (isRetryableError(error)) {
-          // Offline or a cold backend is not proof of a bad token — keep the
-          // session and let the dashboard's own retry surface the problem.
-          console.log("Could not verify session while offline, keeping it.");
-        } else {
-          // A real rejection (401/403) means the stored token is dead.
+        const status = error?.response?.status;
+
+        // Only an explicit rejection proves the token is dead. Anything else —
+        // offline, a cold backend, a 500 from a half-migrated database — is a
+        // statement about the server, not the credentials, so the session is
+        // kept and the dashboard's own retry surfaces the problem.
+        if (status === 401 || status === 403) {
           console.log("Stored token rejected, signing out.");
           await clearSession();
           if (active) {
             setToken(null);
             setUser(null);
           }
+        } else {
+          console.log(
+            "Could not verify session (",
+            status ?? error?.code ?? "network",
+            ") - keeping it.",
+          );
         }
       } finally {
         if (active) {

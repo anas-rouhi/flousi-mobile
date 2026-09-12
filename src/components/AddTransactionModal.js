@@ -12,6 +12,7 @@ import {
   Platform,
 } from "react-native";
 import { describeApiError, describeValidationError } from "../services/api";
+import { colors } from "../constants/theme";
 import { useAccounts } from "../hooks/useAccounts";
 import { fetchCategories } from "../services/categories";
 import { createTransaction } from "../services/transactions";
@@ -23,9 +24,9 @@ import {
   sanitizeAmountInput,
 } from "../utils/money";
 
-const BRAND = "#0A5C36";
-const INCOME = "#2ECC71";
-const EXPENSE = "#E74C3C";
+const BRAND = colors.primary;
+const INCOME = colors.income;
+const EXPENSE = colors.expense;
 
 /** Local midnight-anchored day key, for comparing calendar days safely. */
 function dayKey(date) {
@@ -290,7 +291,7 @@ export default function AddTransactionModal({ visible, onClose, onCreated }) {
                     activeOpacity={0.85}
                   >
                     {creatingAccount ? (
-                      <ActivityIndicator color="#FFFFFF" size="small" />
+                      <ActivityIndicator color={colors.onPrimary} size="small" />
                     ) : (
                       <Text style={styles.noAccountButtonText}>
                         صاوب محفظة «كاش»
@@ -341,7 +342,7 @@ export default function AddTransactionModal({ visible, onClose, onCreated }) {
                 value={description}
                 onChangeText={setDescription}
                 placeholder="مثلا: طاكسي لـ گليز"
-                placeholderTextColor="#B2BEC3"
+                placeholderTextColor={colors.textFaint}
                 maxLength={1000}
                 editable={!submitting}
               />
@@ -402,7 +403,7 @@ export default function AddTransactionModal({ visible, onClose, onCreated }) {
                 activeOpacity={0.85}
               >
                 {submitting ? (
-                  <ActivityIndicator color="#FFFFFF" />
+                  <ActivityIndicator color={colors.onPrimary} />
                 ) : (
                   <Text style={styles.submitText}>
                     {type === "expense" ? "زيد المصروف" : "زيد المدخول"}
@@ -441,7 +442,7 @@ function Chip({ label, meta, active, activeColor, onPress }) {
     <TouchableOpacity
       style={[
         styles.chip,
-        active && { borderColor: activeColor, backgroundColor: "#F4F8F6" },
+        active && { borderColor: activeColor, backgroundColor: colors.primarySoft },
       ]}
       onPress={onPress}
       activeOpacity={0.8}
@@ -455,12 +456,12 @@ function Chip({ label, meta, active, activeColor, onPress }) {
 }
 
 function CategoryTile({ category, active, onPress }) {
-  const color = category.color || "#95A5A6";
+  const color = category.color || colors.textMuted;
   return (
     <TouchableOpacity
       style={[
         styles.categoryTile,
-        active && { borderColor: color, backgroundColor: "#F8F9FA" },
+        active && { borderColor: color, backgroundColor: colors.surfaceMuted },
       ]}
       onPress={onPress}
       activeOpacity={0.8}
@@ -484,7 +485,7 @@ const styles = StyleSheet.create({
   },
   sheetWrapper: { maxHeight: "92%" },
   sheet: {
-    backgroundColor: "#FFFFFF",
+    backgroundColor: colors.surface,
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
     paddingHorizontal: 20,
@@ -494,7 +495,7 @@ const styles = StyleSheet.create({
     width: 42,
     height: 4,
     borderRadius: 2,
-    backgroundColor: "#DDE4E6",
+    backgroundColor: colors.grabber,
     alignSelf: "center",
     marginTop: 10,
   },
@@ -504,12 +505,12 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     paddingVertical: 14,
   },
-  headerTitle: { fontSize: 18, fontWeight: "bold", color: "#2C3E50" },
-  close: { fontSize: 15, color: "#95A5A6", fontWeight: "600" },
+  headerTitle: { fontSize: 18, fontWeight: "bold", color: colors.text },
+  close: { fontSize: 15, color: colors.textMuted, fontWeight: "600" },
 
   segment: {
     flexDirection: "row-reverse",
-    backgroundColor: "#F1F4F5",
+    backgroundColor: colors.surfaceSunken,
     borderRadius: 12,
     padding: 4,
   },
@@ -519,8 +520,8 @@ const styles = StyleSheet.create({
     borderRadius: 9,
     alignItems: "center",
   },
-  segmentText: { fontSize: 15, fontWeight: "600", color: "#7F8C8D" },
-  segmentTextActive: { color: "#FFFFFF", fontWeight: "bold" },
+  segmentText: { fontSize: 15, fontWeight: "600", color: colors.textSecondary },
+  segmentTextActive: { color: colors.onPrimary, fontWeight: "bold" },
 
   amountRow: {
     flexDirection: "row",
@@ -538,40 +539,40 @@ const styles = StyleSheet.create({
   amountSuffix: {
     fontSize: 20,
     fontWeight: "600",
-    color: "#95A5A6",
+    color: colors.textMuted,
     marginLeft: 8,
   },
   amountPreview: {
     fontSize: 13,
-    color: "#95A5A6",
+    color: colors.textMuted,
     textAlign: "center",
     marginTop: 4,
   },
 
   lookupError: {
-    backgroundColor: "#FDECEA",
+    backgroundColor: colors.dangerSurface,
     borderRadius: 10,
     padding: 12,
     marginTop: 16,
     alignItems: "center",
   },
-  lookupErrorText: { color: "#C0392B", fontSize: 13, textAlign: "center" },
+  lookupErrorText: { color: colors.dangerText, fontSize: 13, textAlign: "center" },
   lookupRetry: { color: BRAND, fontWeight: "bold", fontSize: 13, marginTop: 6 },
   lookupSpinner: { marginTop: 16 },
 
   label: {
     fontSize: 13,
     fontWeight: "600",
-    color: "#7F8C8D",
+    color: colors.textSecondary,
     textAlign: "right",
     marginTop: 22,
     marginBottom: 10,
   },
   noAccount: {
     borderWidth: 1,
-    borderColor: "#E4E9EC",
+    borderColor: colors.border,
     borderRadius: 12,
-    backgroundColor: "#F8F9FA",
+    backgroundColor: colors.surfaceMuted,
     padding: 14,
   },
   noAccountText: {
@@ -587,18 +588,18 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     alignItems: "center",
   },
-  noAccountButtonText: { color: "#FFFFFF", fontSize: 14, fontWeight: "bold" },
+  noAccountButtonText: { color: colors.onPrimary, fontSize: 14, fontWeight: "bold" },
 
   emptyHint: {
     fontSize: 13,
-    color: "#B2BEC3",
+    color: colors.textFaint,
     textAlign: "right",
   },
 
   chipRow: { flexDirection: "row-reverse", paddingLeft: 4 },
   chip: {
     borderWidth: 1.5,
-    borderColor: "#E4E9EC",
+    borderColor: colors.border,
     borderRadius: 12,
     paddingVertical: 10,
     paddingHorizontal: 14,
@@ -606,8 +607,8 @@ const styles = StyleSheet.create({
     minWidth: 104,
     alignItems: "flex-end",
   },
-  chipLabel: { fontSize: 14, fontWeight: "600", color: "#2C3E50" },
-  chipMeta: { fontSize: 11, color: "#95A5A6", marginTop: 3 },
+  chipLabel: { fontSize: 14, fontWeight: "600", color: colors.text },
+  chipMeta: { fontSize: 11, color: colors.textMuted, marginTop: 3 },
 
   categoryGrid: {
     flexDirection: "row-reverse",
@@ -617,7 +618,7 @@ const styles = StyleSheet.create({
     flexDirection: "row-reverse",
     alignItems: "center",
     borderWidth: 1.5,
-    borderColor: "#E4E9EC",
+    borderColor: colors.border,
     borderRadius: 11,
     paddingVertical: 9,
     paddingHorizontal: 12,
@@ -625,17 +626,17 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   categoryDot: { width: 9, height: 9, borderRadius: 5, marginLeft: 7 },
-  categoryName: { fontSize: 13, color: "#2C3E50", maxWidth: 130 },
+  categoryName: { fontSize: 13, color: colors.text, maxWidth: 130 },
 
   input: {
-    backgroundColor: "#F8F9FA",
+    backgroundColor: colors.surfaceMuted,
     borderWidth: 1,
-    borderColor: "#E4E9EC",
+    borderColor: colors.border,
     borderRadius: 12,
     paddingHorizontal: 16,
     paddingVertical: 13,
     fontSize: 15,
-    color: "#2C3E50",
+    color: colors.text,
     textAlign: "right",
   },
 
@@ -646,35 +647,35 @@ const styles = StyleSheet.create({
   },
   datePick: {
     borderWidth: 1.5,
-    borderColor: "#E4E9EC",
+    borderColor: colors.border,
     borderRadius: 11,
     paddingVertical: 10,
     paddingHorizontal: 18,
   },
-  datePickActive: { borderColor: BRAND, backgroundColor: "#F4F8F6" },
-  datePickText: { fontSize: 14, fontWeight: "600", color: "#7F8C8D" },
+  datePickActive: { borderColor: BRAND, backgroundColor: colors.primarySoft },
+  datePickText: { fontSize: 14, fontWeight: "600", color: colors.textSecondary },
   datePickTextActive: { color: BRAND },
   stepper: {
     flexDirection: "row-reverse",
     alignItems: "center",
-    backgroundColor: "#F8F9FA",
+    backgroundColor: colors.surfaceMuted,
     borderRadius: 11,
     paddingHorizontal: 6,
   },
   stepperButton: { paddingHorizontal: 12, paddingVertical: 8 },
   stepperButtonDisabled: { opacity: 0.3 },
-  stepperIcon: { fontSize: 22, color: "#2C3E50", lineHeight: 24 },
+  stepperIcon: { fontSize: 22, color: colors.text, lineHeight: 24 },
   stepperLabel: {
     fontSize: 14,
     fontWeight: "600",
-    color: "#2C3E50",
+    color: colors.text,
     minWidth: 92,
     textAlign: "center",
   },
 
   error: {
-    backgroundColor: "#FDECEA",
-    color: "#C0392B",
+    backgroundColor: colors.dangerSurface,
+    color: colors.dangerText,
     borderRadius: 10,
     padding: 12,
     fontSize: 13,
@@ -689,5 +690,5 @@ const styles = StyleSheet.create({
     marginTop: 20,
   },
   submitDisabled: { opacity: 0.7 },
-  submitText: { color: "#FFFFFF", fontSize: 16, fontWeight: "bold" },
+  submitText: { color: colors.onPrimary, fontSize: 16, fontWeight: "bold" },
 });

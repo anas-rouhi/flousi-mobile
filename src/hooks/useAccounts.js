@@ -66,7 +66,7 @@ export function useAccounts({ enabled = true } = {}) {
     setCreating(true);
     setError(null);
     try {
-      const created = await createDefaultCashAccount();
+      const created = await createDefaultCashAccount(user?.preferred_language);
       setAccounts((current) => [created, ...current]);
       setSelectedId(created.id);
       return created;
@@ -77,7 +77,7 @@ export function useAccounts({ enabled = true } = {}) {
     } finally {
       setCreating(false);
     }
-  }, []);
+  }, [user?.preferred_language]);
 
   return {
     accounts,
