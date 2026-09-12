@@ -11,6 +11,13 @@ import api, { describeValidationError } from "./api";
 const TOKEN_KEY = "user_token";
 const USER_KEY = "user_profile";
 
+/**
+ * The language new accounts are created with. The API accepts `fr`, `ar` or
+ * `en` and defaults to `fr`; the UI is Arabic, so registration asks for `ar`.
+ * When a language switcher exists this becomes a parameter instead.
+ */
+export const DEFAULT_LANGUAGE = "ar";
+
 export async function getToken() {
   try {
     return await SecureStore.getItemAsync(TOKEN_KEY);
@@ -119,7 +126,16 @@ export async function login({ email, password }) {
  * @returns {Promise<{user: object, token: string}>}
  */
 export async function register({ name, email, password }) {
-  const response = await api.post("/auth/register", { name, email, password });
+  const response = await api.post("/auth/register", {
+    name,
+    email,
+    password,
+    // Sent explicitly because the API defaults `preferred_language` to French.
+    // The server uses it to name the starter wallet ("كاش" rather than
+    // "Espèces") and to resolve category names, so without this a user of an
+    // Arabic UI receives French data inside it.
+    preferred_language: DEFAULT_LANGUAGE,
+  });
   const { token, user } = response.data;
 
   if (!token) {

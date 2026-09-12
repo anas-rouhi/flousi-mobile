@@ -13,8 +13,10 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import AddTransactionModal from "../components/AddTransactionModal";
 import CreateAccountModal from "../components/accounts/CreateAccountModal";
+import SetBudgetModal from "../components/budget/SetBudgetModal";
 import AccountsCarousel from "../components/home/AccountsCarousel";
 import BalanceCard from "../components/home/BalanceCard";
+import BudgetCard from "../components/home/BudgetCard";
 import CategoryBreakdownCard from "../components/home/CategoryBreakdownCard";
 import MonthFlowCard from "../components/home/MonthFlowCard";
 import QuickActionButton from "../components/home/QuickActionButton";
@@ -22,8 +24,10 @@ import RecentTransactionsList from "../components/home/RecentTransactionsList";
 import { colors, fontSizes, radii, spacing } from "../constants/theme";
 import { useAuth } from "../context/AuthContext";
 import { useAccounts } from "../hooks/useAccounts";
+import { useBudget } from "../hooks/useBudget";
 import { describeApiError, isRetryableError } from "../services/api";
 import { fetchDashboardStats } from "../services/stats";
+import { centimesOf } from "../utils/money";
 
 /** "Anas Rouhi" => "Anas" — the greeting stays short on narrow screens. */
 function firstName(user) {
@@ -47,6 +51,7 @@ export default function HomeScreen() {
   const [signingOut, setSigningOut] = useState(false);
   const [addVisible, setAddVisible] = useState(false);
   const [accountSheetVisible, setAccountSheetVisible] = useState(false);
+  const [budgetSheetVisible, setBudgetSheetVisible] = useState(false);
   const [toast, setToast] = useState(null);
   const toastOpacity = useRef(new Animated.Value(0)).current;
 
@@ -59,6 +64,15 @@ export default function HomeScreen() {
     loading: loadingAccounts,
     reload: reloadAccounts,
   } = useAccounts();
+
+  /**
+   * The budget's "spent" figure is the month's expenses from the dashboard, so
+   * the progress bar advances as soon as a transaction reload lands — no
+   * separate budget refetch, and no stale bar after adding an expense.
+   */
+  const budget = useBudget({
+    spentCentimes: centimesOf(stats?.month?.expenses),
+  });
 
   /**
    * A timed-out or dropped request gets one silent second attempt before the
@@ -148,6 +162,22 @@ export default function HomeScreen() {
       load();
     },
     [load, showToast, reloadAccounts],
+  );
+
+  /**
+   * The sheet stays open when saving fails, so the error it was handed is
+   * visible and the amount is not lost.
+   */
+  const handleBudgetSaved = useCallback(
+    async ({ limitCentimes }) => {
+      const saved = await budget.save({ limitCentimes });
+      if (saved) {
+        setBudgetSheetVisible(false);
+        showToast("تحدّدت الميزانية ✓");
+      }
+      return saved;
+    },
+    [budget, showToast],
   );
 
   /**
@@ -252,6 +282,19 @@ export default function HomeScreen() {
           currency={currency}
         />
 
+        <BudgetCard
+          hasBudget={budget.hasBudget}
+          limitCentimes={budget.limitCentimes}
+          spentCentimes={budget.spentCentimes}
+          remainingCentimes={budget.remainingCentimes}
+          percentage={budget.percentage}
+          state={budget.state}
+          period={budget.period ?? stats?.period}
+          currency={budget.currency ?? currency}
+          loading={budget.loading}
+          onSetBudget={() => setBudgetSheetVisible(true)}
+        />
+
         <AccountsCarousel
           accounts={accounts}
           loading={loadingAccounts}
@@ -299,6 +342,16 @@ export default function HomeScreen() {
         onClose={() => setAccountSheetVisible(false)}
         onCreated={handleAccountCreated}
         currency={currency}
+      />
+
+      <SetBudgetModal
+        visible={budgetSheetVisible}
+        onClose={() => setBudgetSheetVisible(false)}
+        onSave={handleBudgetSaved}
+        currentLimitCentimes={budget.limitCentimes}
+        currency={budget.currency ?? currency}
+        saving={budget.saving}
+        error={budget.error}
       />
     </SafeAreaView>
   );

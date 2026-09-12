@@ -21,6 +21,13 @@ export const colors = {
   income: "#10B981",
   expense: "#EF4444",
 
+  // ---- semantic: budget health ----
+  budgetHealthy: "#10B981", // under 80% of the limit
+  budgetWarning: "#F59E0B", // 80-99%
+  budgetOver: "#EF4444", // 100% or more
+  budgetWarningSurface: "#FEF6E7",
+  budgetOverSurface: "#FDECEA",
+
   // ---- semantic: feedback ----
   danger: "#EF4444",
   dangerText: "#C0392B",
