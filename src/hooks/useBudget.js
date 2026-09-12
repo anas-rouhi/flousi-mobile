@@ -14,6 +14,13 @@ export const BUDGET_STATE = {
   over: "over", // 100% or more
 };
 
+/** The API's own verdict, which uses the same thresholds as the card. */
+const SERVER_STATE = {
+  safe: BUDGET_STATE.healthy,
+  warning: BUDGET_STATE.warning,
+  exceeded: BUDGET_STATE.over,
+};
+
 export function budgetStateFor(percentage) {
   if (percentage >= 100) {
     return BUDGET_STATE.over;
@@ -91,27 +98,41 @@ export function useBudget({ spentCentimes = 0, enabled = true } = {}) {
     [],
   );
 
-  const limitCentimes = centimesOf(budget?.limit);
-  // Server figure wins; otherwise the month's expenses stand in.
-  const spent = budget?.spent ? centimesOf(budget.spent) : spentCentimes;
+  const limitCentimes = centimesOf(budget?.total_limit);
+
+  // The API reports total_spent whether or not a limit is set, and it counts
+  // the same expenses the dashboard does — so it wins. The dashboard figure is
+  // the fallback, and it is what makes the bar move the instant a transaction
+  // reload lands, before any budget refetch.
+  const spent = budget?.total_spent
+    ? centimesOf(budget.total_spent)
+    : spentCentimes;
 
   const percentage =
     limitCentimes > 0
-      ? Number.isFinite(budget?.percentage)
-        ? budget.percentage
+      ? Number.isFinite(budget?.spent_percentage)
+        ? budget.spent_percentage
         : (spent / limitCentimes) * 100
       : 0;
 
+  // The server's status uses the same 80% / 100% thresholds as the card, so it
+  // is preferred; budgetStateFor covers the case where it is absent or null.
+  const state = SERVER_STATE[budget?.status] ?? budgetStateFor(percentage);
+
   return {
     budget,
-    hasBudget: limitCentimes > 0,
+    // `is_configured` is the authoritative answer; the limit check covers a
+    // response that predates that field.
+    hasBudget: budget?.is_configured ?? limitCentimes > 0,
     limitCentimes,
     spentCentimes: spent,
     // Integer centimes throughout: positive means money left, negative means
     // the limit was exceeded by that much.
-    remainingCentimes: limitCentimes - spent,
+    remainingCentimes: budget?.remaining
+      ? centimesOf(budget.remaining)
+      : limitCentimes - spent,
     percentage,
-    state: budgetStateFor(percentage),
+    state,
     currency: budget?.currency,
     period: budget?.period,
     loading,

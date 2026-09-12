@@ -19,14 +19,26 @@ const STATE_COLORS = {
   [BUDGET_STATE.over]: colors.budgetOver,
 };
 
-/** "2026-09" => "شتنبر". Falls back to the raw label if it is not a month. */
+/**
+ * The month name, from either period shape the card can be handed:
+ * the budget API sends `month` as a number 1-12 with a `label`, while the
+ * dashboard's period sends it as the string "2026-09".
+ */
 function monthName(period) {
-  const raw = period?.month;
-  if (typeof raw !== "string") {
+  if (!period) {
     return "";
   }
-  const [, month] = raw.split("-");
-  return MONTH_NAMES[Number(month) - 1] || raw;
+
+  if (Number.isInteger(period.month)) {
+    return MONTH_NAMES[period.month - 1] || period.label || "";
+  }
+
+  if (typeof period.month === "string") {
+    const [, month] = period.month.split("-");
+    return MONTH_NAMES[Number(month) - 1] || period.month;
+  }
+
+  return period.label || "";
 }
 
 /**
