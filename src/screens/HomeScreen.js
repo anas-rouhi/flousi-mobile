@@ -14,6 +14,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import AddTransactionModal from "../components/AddTransactionModal";
 import { useAuth } from "../context/AuthContext";
 import { describeApiError, isRetryableError } from "../services/api";
+import { createDefaultCashAccount } from "../services/accounts";
 import { fetchDashboardStats } from "../services/stats";
 import { formatTransactionDate, monthLabel } from "../utils/date";
 import { centimesOf, formatMoney, formatSignedMoney } from "../utils/money";
@@ -42,6 +43,7 @@ export default function HomeScreen() {
   const [signingOut, setSigningOut] = useState(false);
   const [addVisible, setAddVisible] = useState(false);
   const [toast, setToast] = useState(null);
+  const [creatingAccount, setCreatingAccount] = useState(false);
   const toastOpacity = useRef(new Animated.Value(0)).current;
 
   /**
@@ -149,6 +151,24 @@ export default function HomeScreen() {
     [load, showToast],
   );
 
+  /**
+   * Creates the starter wallet straight from the dashboard, then reloads the
+   * stats so the prompt is replaced by the real (zero) balance card.
+   */
+  const createStarterAccount = useCallback(async () => {
+    setCreatingAccount(true);
+    try {
+      await createDefaultCashAccount();
+      showToast("تصاوبت محفظة «كاش» ✓");
+      await load();
+    } catch (err) {
+      console.log("Starter account failed:", err.response?.data || err.message);
+      Alert.alert("خطأ", describeApiError(err));
+    } finally {
+      setCreatingAccount(false);
+    }
+  }, [load, showToast]);
+
   const greeting = firstName(user);
 
   const header = (
@@ -211,6 +231,19 @@ export default function HomeScreen() {
   const recentTransactions = stats?.recent_transactions || [];
   const timezone = stats?.period?.timezone;
 
+  /**
+   * Whether the user owns any account at all. Counted from the dashboard
+   * payload rather than a second GET /accounts: `balance.accounts_count` covers
+   * the primary currency only, so the other-currency counts are added in to
+   * avoid prompting someone who already has, say, a EUR wallet.
+   */
+  const totalAccounts =
+    (balance?.accounts_count || 0) +
+    (balance?.other_currencies || []).reduce(
+      (sum, row) => sum + (row.accounts_count || 0),
+      0,
+    );
+
   return (
     <SafeAreaView style={styles.screen} edges={["top"]}>
       {header}
@@ -253,6 +286,29 @@ export default function HomeScreen() {
             </View>
           ) : null}
         </View>
+
+        {/* First-run recovery: no wallet means nothing can be recorded yet. */}
+        {totalAccounts === 0 ? (
+          <View style={styles.setupCard}>
+            <Text style={styles.setupTitle}>بدا بمحفظة</Text>
+            <Text style={styles.setupBody}>
+              باش تسجل مصاريفك، خاصك محفظة وحدة على الأقل. صاوب محفظة «كاش»
+              وبدا دابا.
+            </Text>
+            <TouchableOpacity
+              style={styles.setupButton}
+              onPress={createStarterAccount}
+              disabled={creatingAccount}
+              activeOpacity={0.85}
+            >
+              {creatingAccount ? (
+                <ActivityIndicator color="#FFFFFF" size="small" />
+              ) : (
+                <Text style={styles.setupButtonText}>صاوب محفظة «كاش»</Text>
+              )}
+            </TouchableOpacity>
+          </View>
+        ) : null}
 
         {/* Monthly income vs expenses */}
         <View style={styles.card}>
@@ -650,6 +706,36 @@ const styles = StyleSheet.create({
   },
   otherCurrencyAmount: { color: "#FFFFFF", fontSize: 15, fontWeight: "600" },
   otherCurrencyMeta: { color: "#A5D6A7", fontSize: 12 },
+
+  setupCard: {
+    backgroundColor: "#FFFFFF",
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: "#CFE3D8",
+    padding: 18,
+    marginTop: 16,
+  },
+  setupTitle: {
+    fontSize: 16,
+    fontWeight: "bold",
+    color: "#2C3E50",
+    textAlign: "right",
+  },
+  setupBody: {
+    fontSize: 13,
+    lineHeight: 21,
+    color: "#7F8C8D",
+    textAlign: "right",
+    marginTop: 6,
+    marginBottom: 14,
+  },
+  setupButton: {
+    backgroundColor: BRAND,
+    borderRadius: 11,
+    paddingVertical: 13,
+    alignItems: "center",
+  },
+  setupButtonText: { color: "#FFFFFF", fontSize: 14, fontWeight: "bold" },
 
   card: {
     backgroundColor: "#FFFFFF",

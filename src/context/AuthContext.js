@@ -21,6 +21,7 @@ import {
   hasCompletedOnboarding,
   markOnboardingCompleted,
 } from "../services/onboarding";
+import { onUnauthorized } from "../services/sessionEvents";
 
 const AuthContext = createContext(null);
 
@@ -91,6 +92,22 @@ export function AuthProvider({ children }) {
     return () => {
       active = false;
     };
+  }, []);
+
+  /**
+   * A 401 on any authenticated request means the stored token is dead — most
+   * often revoked from another device or wiped with the backend's database.
+   * Clearing the session here is all the "redirect" that is needed: the
+   * navigator's screen set is derived from `isAuthenticated`, so the dashboard
+   * unmounts and Login takes its place.
+   */
+  useEffect(() => {
+    return onUnauthorized(async ({ url } = {}) => {
+      console.log("Token rejected by", url || "the API", "- signing out.");
+      await clearSession();
+      setToken(null);
+      setUser(null);
+    });
   }, []);
 
   /**

@@ -12,7 +12,7 @@ import {
   Platform,
 } from "react-native";
 import { describeApiError, describeValidationError } from "../services/api";
-import { fetchAccounts } from "../services/accounts";
+import { useAccounts } from "../hooks/useAccounts";
 import { fetchCategories } from "../services/categories";
 import { createTransaction } from "../services/transactions";
 import { formatLocalDay } from "../utils/date";
@@ -61,17 +61,32 @@ function toTransactionDate(day) {
 export default function AddTransactionModal({ visible, onClose, onCreated }) {
   const [type, setType] = useState("expense");
   const [amount, setAmount] = useState("");
-  const [accountId, setAccountId] = useState(null);
   const [categoryId, setCategoryId] = useState(null);
   const [description, setDescription] = useState("");
   const [day, setDay] = useState(startOfToday);
 
-  const [accounts, setAccounts] = useState([]);
   const [categories, setCategories] = useState([]);
-  const [loadingLookups, setLoadingLookups] = useState(false);
+  const [loadingCategories, setLoadingCategories] = useState(false);
   const [lookupError, setLookupError] = useState(null);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState(null);
+
+  // Accounts (and the default selection) come from the shared hook, which also
+  // owns the "no wallet yet" recovery. It only fetches while the sheet is open.
+  const {
+    accounts,
+    selectedId: accountId,
+    setSelectedId: setAccountId,
+    selectedAccount,
+    isEmpty: noAccounts,
+    loading: loadingAccounts,
+    creating: creatingAccount,
+    error: accountError,
+    reload: reloadAccounts,
+    createDefaultAccount,
+  } = useAccounts({ enabled: visible });
+
+  const loadingLookups = loadingAccounts || loadingCategories;
 
   const resetForm = useCallback(() => {
     setType("expense");
@@ -83,36 +98,39 @@ export default function AddTransactionModal({ visible, onClose, onCreated }) {
   }, []);
 
   /**
-   * Accounts and categories are fetched once per open. Both lists are small and
-   * the whole category catalogue is loaded, so flipping expense/income filters
-   * locally instead of hitting the network again.
+   * The whole category catalogue is loaded once per open — it is small, and
+   * holding both types locally lets the expense/income switch be instant
+   * instead of costing another round trip.
    */
-  const loadLookups = useCallback(async () => {
-    setLoadingLookups(true);
+  const loadCategories = useCallback(async () => {
+    setLoadingCategories(true);
     setLookupError(null);
     try {
-      const [accountRows, categoryRows] = await Promise.all([
-        fetchAccounts(),
-        fetchCategories(),
-      ]);
-      setAccounts(accountRows);
-      setCategories(categoryRows);
-      // Default to the first available account, per the quick-entry goal.
-      setAccountId((current) => current ?? accountRows[0]?.id ?? null);
+      setCategories(await fetchCategories());
     } catch (err) {
-      console.log("Lookup load failed:", err.response?.data || err.message);
+      console.log("Category load failed:", err.response?.data || err.message);
       setLookupError(describeApiError(err));
     } finally {
-      setLoadingLookups(false);
+      setLoadingCategories(false);
     }
   }, []);
 
   useEffect(() => {
     if (visible) {
       resetForm();
-      loadLookups();
+      loadCategories();
     }
-  }, [visible, resetForm, loadLookups]);
+  }, [visible, resetForm, loadCategories]);
+
+  /** Retries whichever of the two lookups actually failed. */
+  const retryLookups = useCallback(() => {
+    if (lookupError) {
+      loadCategories();
+    }
+    if (accountError) {
+      reloadAccounts();
+    }
+  }, [lookupError, accountError, loadCategories, reloadAccounts]);
 
   const typeCategories = useMemo(
     () => categories.filter((category) => category.type === type),
@@ -126,7 +144,6 @@ export default function AddTransactionModal({ visible, onClose, onCreated }) {
     );
   }, [typeCategories]);
 
-  const selectedAccount = accounts.find((account) => account.id === accountId);
   const currency = selectedAccount?.currency || "MAD";
   const centimes = amountToCentimes(amount);
   const isToday = dayKey(day) === dayKey(startOfToday());
@@ -238,10 +255,12 @@ export default function AddTransactionModal({ visible, onClose, onCreated }) {
                 </Text>
               ) : null}
 
-              {lookupError ? (
+              {lookupError || accountError ? (
                 <View style={styles.lookupError}>
-                  <Text style={styles.lookupErrorText}>{lookupError}</Text>
-                  <TouchableOpacity onPress={loadLookups}>
+                  <Text style={styles.lookupErrorText}>
+                    {lookupError || accountError}
+                  </Text>
+                  <TouchableOpacity onPress={retryLookups}>
                     <Text style={styles.lookupRetry}>عاود المحاولة</Text>
                   </TouchableOpacity>
                 </View>
@@ -257,10 +276,28 @@ export default function AddTransactionModal({ visible, onClose, onCreated }) {
 
               {/* Account selector */}
               <Text style={styles.label}>الحساب</Text>
-              {accounts.length === 0 && !loadingLookups ? (
-                <Text style={styles.emptyHint}>
-                  ما عندكش حساب. زيد حساب قبل ما تسجل معاملة.
-                </Text>
+              {noAccounts ? (
+                // A user with no wallet used to be stuck here with nothing to
+                // tap. One press creates the starter cash account and selects it.
+                <View style={styles.noAccount}>
+                  <Text style={styles.noAccountText}>
+                    ما عندكش حتى محفظة. صاوب محفظة «كاش» ودخل معاملتك دابا.
+                  </Text>
+                  <TouchableOpacity
+                    style={styles.noAccountButton}
+                    onPress={createDefaultAccount}
+                    disabled={creatingAccount}
+                    activeOpacity={0.85}
+                  >
+                    {creatingAccount ? (
+                      <ActivityIndicator color="#FFFFFF" size="small" />
+                    ) : (
+                      <Text style={styles.noAccountButtonText}>
+                        صاوب محفظة «كاش»
+                      </Text>
+                    )}
+                  </TouchableOpacity>
+                </View>
               ) : (
                 <ScrollView
                   horizontal
@@ -530,6 +567,28 @@ const styles = StyleSheet.create({
     marginTop: 22,
     marginBottom: 10,
   },
+  noAccount: {
+    borderWidth: 1,
+    borderColor: "#E4E9EC",
+    borderRadius: 12,
+    backgroundColor: "#F8F9FA",
+    padding: 14,
+  },
+  noAccountText: {
+    fontSize: 13,
+    lineHeight: 21,
+    color: "#5C6E64",
+    textAlign: "right",
+    marginBottom: 12,
+  },
+  noAccountButton: {
+    backgroundColor: BRAND,
+    borderRadius: 10,
+    paddingVertical: 12,
+    alignItems: "center",
+  },
+  noAccountButtonText: { color: "#FFFFFF", fontSize: 14, fontWeight: "bold" },
+
   emptyHint: {
     fontSize: 13,
     color: "#B2BEC3",

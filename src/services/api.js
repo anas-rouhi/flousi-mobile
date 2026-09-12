@@ -1,5 +1,6 @@
 import axios from "axios";
 import * as SecureStore from "expo-secure-store";
+import { emitUnauthorized } from "./sessionEvents";
 
 /**
  * Base URL resolution.
@@ -12,7 +13,7 @@ import * as SecureStore from "expo-secure-store";
  * The value may be either a bare host ("http://10.0.0.5:8000") or a full API
  * root ("http://10.0.0.5:8000/api/v1"); both resolve to the same baseURL.
  */
-const DEFAULT_HOST = "http://192.168.110.11:8000";
+const DEFAULT_HOST = "http://192.168.3.220:8000";
 const API_PREFIX = "/api/v1";
 
 function resolveBaseUrl() {
@@ -60,6 +61,38 @@ export function isRetryableError(error) {
   }
   return error?.code === "ECONNABORTED" || error?.code === "ERR_NETWORK";
 }
+
+/**
+ * The only endpoints that are reachable without a token. A 401 from one of
+ * these is a verdict on the submitted credentials, not on a stored session, so
+ * it must never trigger a sign-out.
+ */
+const UNAUTHENTICATED_ROUTES = ["/auth/login", "/auth/register"];
+
+/**
+ * Turns a rejected token into a clean sign-out.
+ *
+ * Without this, a token revoked server-side left the user sitting on the
+ * dashboard staring at an error until the next cold start — `/me` only runs at
+ * boot. Now any authenticated 401 clears the session and the navigation gate
+ * returns them to Login, because the gate is driven by the auth state itself.
+ */
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    const status = error?.response?.status;
+    const url = error?.config?.url || "";
+    const isEntryPoint = UNAUTHENTICATED_ROUTES.some((route) =>
+      url.includes(route),
+    );
+
+    if (status === 401 && !isEntryPoint) {
+      emitUnauthorized({ url });
+    }
+
+    return Promise.reject(error);
+  },
+);
 
 /**
  * Laravel answers a failed validation with 422 and an `errors` bag. The first
