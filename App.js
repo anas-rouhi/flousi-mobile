@@ -6,7 +6,7 @@ import { colors } from "./src/constants/theme";
 import { NavigationContainer } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { AuthProvider, useAuth } from "./src/context/AuthContext";
-import HomeScreen from "./src/screens/HomeScreen";
+import TabNavigator from "./src/navigation/TabNavigator";
 import LoginScreen from "./src/screens/LoginScreen";
 import OnboardingScreen from "./src/screens/OnboardingScreen";
 import RegisterScreen from "./src/screens/RegisterScreen";
@@ -42,7 +42,7 @@ function RootNavigator() {
       screenOptions={{ headerShown: false, animation: "slide_from_right" }}
     >
       {isAuthenticated ? (
-        <Stack.Screen name="Home" component={HomeScreen} />
+        <Stack.Screen name="Home" component={TabNavigator} />
       ) : (
         <>
           <Stack.Screen name="Presentation">

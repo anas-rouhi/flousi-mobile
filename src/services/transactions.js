@@ -38,3 +38,49 @@ export async function createTransaction({
   // JsonResource wraps the created row in `data`.
   return response.data?.data ?? response.data;
 }
+
+/**
+ * GET /api/v1/transactions — paginated history, newest first.
+ *
+ * Supported filters: `type` (income|expense|transfer), `account_id`,
+ * `category_id`, `from`/`to` dates, and `month`+`year` which are
+ * `required_with` each other (a lone `month` is a 422).
+ *
+ * There is deliberately no text-search parameter on the API, so description
+ * search is applied client-side over the pages already loaded — see
+ * `useTransactions`.
+ *
+ * @returns {Promise<{rows: object[], page: number, lastPage: number, total: number}>}
+ */
+export async function fetchTransactions({
+  page = 1,
+  perPage = 20,
+  type,
+  accountId,
+  categoryId,
+  signal,
+} = {}) {
+  const response = await api.get("/transactions", {
+    params: {
+      page,
+      per_page: perPage,
+      ...(type ? { type } : {}),
+      ...(accountId ? { account_id: accountId } : {}),
+      ...(categoryId ? { category_id: categoryId } : {}),
+    },
+    signal,
+  });
+
+  const meta = response.data?.meta;
+  return {
+    rows: response.data?.data ?? [],
+    page: meta?.current_page ?? page,
+    lastPage: meta?.last_page ?? page,
+    total: meta?.total ?? 0,
+  };
+}
+
+/** DELETE /api/v1/transactions/{id} — 204, and reverses the account balance. */
+export async function deleteTransaction(id) {
+  await api.delete(`/transactions/${id}`);
+}

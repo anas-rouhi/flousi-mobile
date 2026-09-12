@@ -21,6 +21,14 @@ export const colors = {
   income: "#10B981",
   expense: "#EF4444",
 
+  // ---- navigation ----
+  tabActive: "#0A5C36",
+  tabInactive: "#94A3B8",
+  tabBar: "#FFFFFF",
+
+  // ---- transfers: neither income nor expense ----
+  transfer: "#3B82F6",
+
   // ---- semantic: budget health ----
   budgetHealthy: "#10B981", // under 80% of the limit
   budgetWarning: "#F59E0B", // 80-99%
