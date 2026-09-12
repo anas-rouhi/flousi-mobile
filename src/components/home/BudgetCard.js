@@ -50,27 +50,28 @@ export default function BudgetCard({
 }) {
   // ---- State A: nothing configured yet ----
   if (!hasBudget) {
+    // The banner renders even while the budget request is still in flight: a
+    // spinner in its place meant the card could sit blank for the whole 30s
+    // timeout on a bad connection, which reads as "the feature is missing".
+    // Only the button waits, so a limit cannot be set against unknown state.
     return (
       <Card style={styles.emptyCard}>
-        {loading ? (
-          <ActivityIndicator color={colors.primary} size="small" />
-        ) : (
-          <>
-            <Text style={styles.emptyTitle}>
-              مازال ما حددتي ميزانية هاد الشهر
-            </Text>
-            <Text style={styles.emptyBody}>
-              حدد سقف للمصاريف وتبّع بشحال باقي ليك نهار بنهار.
-            </Text>
-            <TouchableOpacity
-              style={styles.emptyButton}
-              onPress={onSetBudget}
-              activeOpacity={0.85}
-            >
-              <Text style={styles.emptyButtonText}>حدد الميزانية</Text>
-            </TouchableOpacity>
-          </>
-        )}
+        <Text style={styles.emptyTitle}>مازال ما حددتي ميزانية هاد الشهر</Text>
+        <Text style={styles.emptyBody}>
+          حدد سقف للمصاريف وتبّع بشحال باقي ليك نهار بنهار.
+        </Text>
+        <TouchableOpacity
+          style={[styles.emptyButton, loading && styles.emptyButtonLoading]}
+          onPress={onSetBudget}
+          disabled={loading}
+          activeOpacity={0.85}
+        >
+          {loading ? (
+            <ActivityIndicator color={colors.onPrimary} size="small" />
+          ) : (
+            <Text style={styles.emptyButtonText}>حدد الميزانية</Text>
+          )}
+        </TouchableOpacity>
       </Card>
     );
   }
@@ -173,6 +174,7 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.md,
     paddingHorizontal: spacing.xxl,
   },
+  emptyButtonLoading: { opacity: 0.7 },
   emptyButtonText: {
     color: colors.onPrimary,
     fontSize: fontSizes.body,
