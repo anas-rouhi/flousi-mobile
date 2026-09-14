@@ -19,10 +19,32 @@ import { AuthProvider, useAuth } from "./src/context/AuthContext";
 import { LocaleProvider, useLocale } from "./src/context/LocaleContext";
 import TabNavigator from "./src/navigation/TabNavigator";
 import LoginScreen from "./src/screens/LoginScreen";
+import ForgotPasswordScreen from "./src/screens/ForgotPasswordScreen";
+import ResetPasswordScreen from "./src/screens/ResetPasswordScreen";
 import OnboardingScreen from "./src/screens/OnboardingScreen";
 import RegisterScreen from "./src/screens/RegisterScreen";
 
 const Stack = createNativeStackNavigator();
+
+/**
+ * Deep links, used only by the password reset email so far.
+ *
+ * React Navigation handles both entry points from this one declaration: a cold
+ * start reads the launch URL, and a link arriving while the app is already open
+ * is routed the same way. It also parses `?token=…&email=…` straight into the
+ * screen's route params, so no screen has to touch Linking.
+ *
+ * Both prefixes are accepted: `flousi://` works today, and the https form is
+ * ready for when the domain is set up to hand its links to the app.
+ */
+const linking = {
+  prefixes: ["flousi://", "https://app.flousi.ma"],
+  config: {
+    screens: {
+      ResetPassword: "reset-password",
+    },
+  },
+};
 
 /**
  * The authentication gate.
@@ -55,7 +77,12 @@ function RootNavigator() {
       screenOptions={{ headerShown: false, animation: "slide_from_right" }}
     >
       {isAuthenticated ? (
-        <Stack.Screen name="Home" component={TabNavigator} />
+        <>
+          <Stack.Screen name="Home" component={TabNavigator} />
+          {/* Also reachable while signed in: a reset link may be opened on a
+              device that still holds a session, and the link must not dead-end. */}
+          <Stack.Screen name="ResetPassword" component={ResetPasswordScreen} />
+        </>
       ) : (
         <>
           <Stack.Screen name="Presentation">
@@ -74,6 +101,11 @@ function RootNavigator() {
           </Stack.Screen>
           <Stack.Screen name="Login" component={LoginScreen} />
           <Stack.Screen name="Register" component={RegisterScreen} />
+          <Stack.Screen
+            name="ForgotPassword"
+            component={ForgotPasswordScreen}
+          />
+          <Stack.Screen name="ResetPassword" component={ResetPasswordScreen} />
         </>
       )}
     </Stack.Navigator>
@@ -159,7 +191,7 @@ function ThemedApp() {
     <AuthProvider>
       {/* Inverted against the ground, so icons stay legible in both themes. */}
       <StatusBar style={isDark ? "light" : "dark"} />
-      <NavigationContainer theme={navigationTheme}>
+      <NavigationContainer theme={navigationTheme} linking={linking}>
         <RootNavigator />
       </NavigationContainer>
     </AuthProvider>

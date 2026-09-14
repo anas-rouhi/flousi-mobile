@@ -128,6 +128,14 @@ export default function LoginScreen({ navigation }) {
           </TouchableOpacity>
 
           <TouchableOpacity
+            style={styles.forgotRow}
+            onPress={() => navigation.navigate("ForgotPassword")}
+            disabled={loading}
+          >
+            <Text style={styles.link}>نسيتي كلمة السر؟</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
             style={styles.linkRow}
             onPress={() => navigation.navigate("Register")}
             disabled={loading}
@@ -216,6 +224,10 @@ const createStyles = (colors) =>
   buttonDisabled: { opacity: 0.7 },
   buttonText: { color: colors.onPrimary, fontSize: 16, fontWeight: "bold" },
 
+  forgotRow: {
+    alignItems: "center",
+    marginTop: 16,
+  },
   linkRow: {
     flexDirection: "row",
     justifyContent: "center",
