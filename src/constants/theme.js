@@ -1,46 +1,52 @@
 /**
  * The single source of design values for the app.
  *
- * Most tokens carry the hex values the screens were already using, so adopting
- * them is a rename rather than a redesign. Two colours changed on purpose:
- * expense moved to #EF4444 and income to #10B981.
+ * Colours come in two palettes with identical keys, so a component reads
+ * `colors.surface` and gets the right value for the active theme. Everything
+ * else (spacing, radii, type scale) is theme-independent and stays flat.
  *
- * Import the pieces you need (`colors`, `spacing`, …) rather than the default
- * bundle — it keeps call sites short and makes unused tokens obvious.
+ * Components must not import `lightColors`/`darkColors` directly — they use
+ * `useTheme()` / `useThemedStyles()` from context/ThemeContext, which re-render
+ * when the theme changes.
  */
 
-export const colors = {
+const BRAND_EMERALD = "#0A5C36";
+/** Lightened so the brand still reads as the brand on a dark ground. */
+const BRAND_EMERALD_LIGHT = "#34A97B";
+const MINT = "#10B981";
+
+export const lightColors = {
   // ---- brand ----
-  primary: "#0A5C36", // Primary Emerald
+  primary: BRAND_EMERALD,
   primaryPressed: "#074227",
-  primarySoft: "#F4F8F6", // tinted surface for selected states
+  primarySoft: "#F4F8F6",
   primaryBorder: "#CFE3D8",
-  mint: "#10B981", // Mint accent
+  mint: MINT,
 
   // ---- semantic: money direction ----
-  income: "#10B981",
+  income: MINT,
   expense: "#EF4444",
-
-  // ---- navigation ----
-  tabActive: "#0A5C36",
-  tabInactive: "#94A3B8",
-  tabBar: "#FFFFFF",
-
-  // ---- transfers: neither income nor expense ----
   transfer: "#3B82F6",
-
-  // ---- semantic: budget health ----
-  budgetHealthy: "#10B981", // under 80% of the limit
-  budgetWarning: "#F59E0B", // 80-99%
-  budgetOver: "#EF4444", // 100% or more
-  budgetWarningSurface: "#FEF6E7",
-  budgetOverSurface: "#FDECEA",
 
   // ---- semantic: feedback ----
   danger: "#EF4444",
   dangerText: "#C0392B",
   dangerSurface: "#FDECEA",
   dangerBorder: "#F5C6C1",
+  success: MINT,
+  warning: "#F59E0B",
+
+  // ---- navigation ----
+  tabActive: BRAND_EMERALD,
+  tabInactive: "#94A3B8",
+  tabBar: "#FFFFFF",
+
+  // ---- budget health ----
+  budgetHealthy: MINT,
+  budgetWarning: "#F59E0B",
+  budgetOver: "#EF4444",
+  budgetWarningSurface: "#FEF6E7",
+  budgetOverSurface: "#FDECEA",
 
   // ---- surfaces ----
   background: "#F8F9FA",
@@ -49,7 +55,7 @@ export const colors = {
   surfaceSunken: "#F1F4F5",
   border: "#E4E9EC",
   divider: "#ECF0F1",
-  track: "#ECF0F1", // unfilled portion of a progress bar
+  track: "#ECF0F1",
   grabber: "#DDE4E6",
   scrim: "rgba(0,0,0,0.45)",
 
@@ -60,27 +66,94 @@ export const colors = {
   textFaint: "#B2BEC3",
   textPlaceholder: "#B2BEC3",
   onPrimary: "#FFFFFF",
-  onPrimaryMuted: "#C8E6C9", // legible on the emerald balance card
+  onPrimaryMuted: "#C8E6C9",
   onPrimaryFaint: "#A5D6A7",
   onPrimaryDivider: "#4C8C6B",
 
-  // ---- toast / inverted surface ----
+  // ---- inverted surface (toasts) ----
   inverse: "#2C3E50",
   onInverse: "#FFFFFF",
 
-  /**
-   * Reserved for a future dark theme. Nothing reads these yet — app.json pins
-   * `userInterfaceStyle: "light"` — so treat them as a declaration of intent,
-   * not as working dark mode.
-   */
-  dark: {
-    background: "#0D1411",
-    surface: "#151F1A",
-    border: "#26342C",
-    text: "#E6EEE8",
-    textSecondary: "#B6C6BC",
-  },
+  isDark: false,
 };
+
+/**
+ * Dark palette.
+ *
+ * Not a naive inversion: surfaces step *up* in lightness to signal elevation,
+ * the semantic hues are lightened so they stay legible without glowing, and the
+ * emerald brand is replaced by a lighter tint that survives a dark ground. The
+ * `onPrimary*` keys are unchanged because the balance hero keeps the deep
+ * emerald in both themes.
+ */
+export const darkColors = {
+  primary: BRAND_EMERALD_LIGHT,
+  primaryPressed: "#2A8C64",
+  primarySoft: "#16251E",
+  primaryBorder: "#2C4A3B",
+  mint: "#34D399",
+
+  income: "#34D399",
+  expense: "#F87171",
+  transfer: "#60A5FA",
+
+  danger: "#F87171",
+  dangerText: "#FCA5A5",
+  dangerSurface: "#2A1615",
+  dangerBorder: "#4C2422",
+  success: "#34D399",
+  warning: "#FBBF24",
+
+  tabActive: BRAND_EMERALD_LIGHT,
+  tabInactive: "#64748B",
+  tabBar: "#131C18",
+
+  budgetHealthy: "#34D399",
+  budgetWarning: "#FBBF24",
+  budgetOver: "#F87171",
+  budgetWarningSurface: "#2A2213",
+  budgetOverSurface: "#2A1615",
+
+  background: "#0D1411",
+  surface: "#151F1A",
+  surfaceMuted: "#1A2620",
+  surfaceSunken: "#1E2B24",
+  border: "#26342C",
+  divider: "#223029",
+  track: "#223029",
+  grabber: "#33453B",
+  scrim: "rgba(0,0,0,0.6)",
+
+  text: "#E6EEE8",
+  textSecondary: "#A9BCB1",
+  textMuted: "#8A9D92",
+  textFaint: "#6B7F75",
+  textPlaceholder: "#6B7F75",
+
+  /**
+   * Dark mode inverts what sits on the brand. `primary` is lightened here so it
+   * reads as text on a dark ground, which makes it too light to carry white
+   * text as a fill — white on it is only 2.95:1. So anything painted on the
+   * brand uses dark ink instead.
+   */
+  onPrimary: "#06231A",
+  onPrimaryMuted: "#0E3D2C",
+  onPrimaryFaint: "#17503B",
+  onPrimaryDivider: "#6FC4A0",
+
+  inverse: "#E6EEE8",
+  onInverse: "#0D1411",
+
+  isDark: true,
+};
+
+export const palettes = { light: lightColors, dark: darkColors };
+
+/**
+ * The light palette, for the few places that read a colour outside a React
+ * component. Components must use `useTheme()` instead.
+ */
+export const colors = lightColors;
 
 export const spacing = {
   xs: 4,
@@ -142,10 +215,10 @@ export const shadows = {
   },
 };
 
-/** Colour for a transaction/flow direction. */
-export function directionColor(type) {
-  return type === "income" ? colors.income : colors.expense;
+/** Colour for a transaction/flow direction, in the supplied palette. */
+export function directionColor(type, palette = lightColors) {
+  return type === "income" ? palette.income : palette.expense;
 }
 
-const theme = { colors, spacing, radii, fontSizes, shadows };
+const theme = { colors: lightColors, spacing, radii, fontSizes, shadows };
 export default theme;

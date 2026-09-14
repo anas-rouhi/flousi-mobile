@@ -1,6 +1,7 @@
 import React from "react";
 import { View, Text, StyleSheet } from "react-native";
-import { colors, fontSizes, radii, shadows, spacing } from "../../constants/theme";
+import { fontSizes, radii, shadows, spacing } from "../../constants/theme";
+import { useThemedStyles } from "../../context/ThemeContext";
 
 /**
  * The white content card every dashboard section sits in, and its RTL header
@@ -8,6 +9,7 @@ import { colors, fontSizes, radii, shadows, spacing } from "../../constants/them
  * these styles — so a change to card padding meant four edits.
  */
 export function Card({ children, style }) {
+  const styles = useThemedStyles(createStyles);
   return <View style={[styles.card, style]}>{children}</View>;
 }
 
@@ -16,6 +18,7 @@ export function Card({ children, style }) {
  *   trailing slot: a count, a month label, or a pressable "show all" link.
  */
 export function CardHeader({ title, meta }) {
+  const styles = useThemedStyles(createStyles);
   return (
     <View style={styles.header}>
       <Text style={styles.title}>{title}</Text>
@@ -25,10 +28,12 @@ export function CardHeader({ title, meta }) {
 }
 
 export function CardHeaderMeta({ children }) {
+  const styles = useThemedStyles(createStyles);
   return <Text style={styles.meta}>{children}</Text>;
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors) =>
+  StyleSheet.create({
   card: {
     backgroundColor: colors.surface,
     borderRadius: radii.xl,

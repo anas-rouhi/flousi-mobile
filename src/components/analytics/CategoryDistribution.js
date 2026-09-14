@@ -2,7 +2,8 @@ import React from "react";
 import { View, Text, StyleSheet } from "react-native";
 import { Card, CardHeader, CardHeaderMeta } from "../ui/Card";
 import { categoryGlyph } from "../../constants/categoryIcons";
-import { colors, fontSizes, radii, spacing } from "../../constants/theme";
+import { fontSizes, radii, spacing } from "../../constants/theme";
+import { useTheme, useThemedStyles } from "../../context/ThemeContext";
 
 /**
  * Where the month's expenses went, largest first.
@@ -12,6 +13,7 @@ import { colors, fontSizes, radii, spacing } from "../../constants/theme";
  * Money uses the `spent_formatted` strings; `spent` centimes stay untouched.
  */
 export default function CategoryDistribution({ categories = [] }) {
+  const styles = useThemedStyles(createStyles);
   const top = categories[0];
 
   return (
@@ -55,6 +57,8 @@ export default function CategoryDistribution({ categories = [] }) {
 }
 
 function CategoryRow({ category, isTop }) {
+  const { colors } = useTheme();
+  const styles = useThemedStyles(createStyles);
   const share = Number.isFinite(category.percentage) ? category.percentage : 0;
   const color = category.color || colors.textMuted;
 
@@ -95,7 +99,8 @@ function CategoryRow({ category, isTop }) {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors) =>
+  StyleSheet.create({
   empty: {
     color: colors.textSecondary,
     textAlign: "center",

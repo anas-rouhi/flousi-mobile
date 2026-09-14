@@ -7,16 +7,17 @@ import {
   TouchableOpacity,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { colors } from "../constants/theme";
+import { useTheme, useThemedStyles } from "../context/ThemeContext";
 
-const BRAND = colors.primary;
 
 /** The four pillars of the product, in pitch order. */
 const FEATURES = [
   {
     key: "tracking",
     glyph: "⚡",
-    accent: colors.primary,
+    // The brand accent follows the theme; the other three are one-off
+    // illustration colours that read correctly on either ground.
+    accentToken: "primary",
     title: "سجل مصروفك فـ أقل من 5 ثواني",
     subtitle: "Suivi ultra-rapide",
     body: "زيد المصروف بالدارجة ولا بالفرنسية بضغطة وحدة. بلا جداول، بلا تعقيد — كتب «قهوة 12 درهم» وصافي.",
@@ -48,6 +49,8 @@ const FEATURES = [
 ];
 
 export default function OnboardingScreen({ onCreateAccount, onLogin }) {
+  const { colors } = useTheme();
+  const styles = useThemedStyles(createStyles);
   return (
     <SafeAreaView style={styles.container} edges={["top", "bottom"]}>
       <ScrollView
@@ -74,22 +77,27 @@ export default function OnboardingScreen({ onCreateAccount, onLogin }) {
 
         {/* Feature detail */}
         <View style={styles.features}>
-          {FEATURES.map((feature) => (
+          {FEATURES.map((feature) => {
+            const accent = feature.accentToken
+              ? colors[feature.accentToken]
+              : feature.accent;
+            return (
             <View key={feature.key} style={styles.featureCard}>
               <View
-                style={[styles.glyphCircle, { backgroundColor: feature.accent }]}
+                style={[styles.glyphCircle, { backgroundColor: accent }]}
               >
                 <Text style={styles.glyph}>{feature.glyph}</Text>
               </View>
               <View style={styles.featureBody}>
                 <Text style={styles.featureTitle}>{feature.title}</Text>
-                <Text style={[styles.featureSubtitle, { color: feature.accent }]}>
+                <Text style={[styles.featureSubtitle, { color: accent }]}>
                   {feature.subtitle}
                 </Text>
                 <Text style={styles.featureText}>{feature.body}</Text>
               </View>
             </View>
-          ))}
+            );
+          })}
         </View>
 
         <Text style={styles.footnote}>
@@ -123,7 +131,8 @@ export default function OnboardingScreen({ onCreateAccount, onLogin }) {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors) =>
+  StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.surface },
   content: { paddingBottom: 24 },
 
@@ -137,7 +146,7 @@ const styles = StyleSheet.create({
     width: 64,
     height: 64,
     borderRadius: 20,
-    backgroundColor: BRAND,
+    backgroundColor: colors.primary,
     alignItems: "center",
     justifyContent: "center",
   },
@@ -145,7 +154,7 @@ const styles = StyleSheet.create({
   brand: {
     fontSize: 26,
     fontWeight: "bold",
-    color: BRAND,
+    color: colors.primary,
     letterSpacing: 3,
     marginTop: 14,
   },
@@ -220,7 +229,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surface,
   },
   primaryButton: {
-    backgroundColor: BRAND,
+    backgroundColor: colors.primary,
     borderRadius: 14,
     paddingVertical: 16,
     alignItems: "center",
@@ -232,7 +241,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginTop: 10,
     borderWidth: 1.5,
-    borderColor: BRAND,
+    borderColor: colors.primary,
   },
-  secondaryButtonText: { color: BRAND, fontSize: 15, fontWeight: "bold" },
+  secondaryButtonText: { color: colors.primary, fontSize: 15, fontWeight: "bold" },
 });

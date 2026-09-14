@@ -1,7 +1,8 @@
 import React from "react";
 import { View, Text, StyleSheet } from "react-native";
 import { Card, CardHeader, CardHeaderMeta } from "../ui/Card";
-import { colors, fontSizes, radii, spacing } from "../../constants/theme";
+import { fontSizes, radii, spacing } from "../../constants/theme";
+import { useTheme, useThemedStyles } from "../../context/ThemeContext";
 import { monthLabel } from "../../utils/date";
 import { centimesOf, formatMoney } from "../../utils/money";
 
@@ -14,6 +15,8 @@ import { centimesOf, formatMoney } from "../../utils/money";
  * only what the numbers alone do not convey.
  */
 export default function MonthFlowCard({ month, period, currency }) {
+  const { colors } = useTheme();
+  const styles = useThemedStyles(createStyles);
   const net = centimesOf(month?.net);
   const hasSavingsRate =
     month?.savings_rate !== null && month?.savings_rate !== undefined;
@@ -55,6 +58,8 @@ export default function MonthFlowCard({ month, period, currency }) {
 
 /** Proportional bar, sized from the authoritative centime integers. */
 function FlowBar({ income, expenses }) {
+  const { colors } = useTheme();
+  const styles = useThemedStyles(createStyles);
   const incomeCentimes = centimesOf(income);
   const expenseCentimes = centimesOf(expenses);
   const total = incomeCentimes + expenseCentimes;
@@ -84,6 +89,7 @@ function FlowBar({ income, expenses }) {
 }
 
 function LegendDot({ color, label }) {
+  const styles = useThemedStyles(createStyles);
   return (
     <View style={styles.legendItem}>
       <View style={[styles.legendSwatch, { backgroundColor: color }]} />
@@ -92,7 +98,8 @@ function LegendDot({ color, label }) {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors) =>
+  StyleSheet.create({
   track: {
     flexDirection: "row-reverse",
     height: 10,

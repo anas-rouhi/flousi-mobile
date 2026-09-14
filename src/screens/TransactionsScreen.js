@@ -14,7 +14,8 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import AddTransactionModal from "../components/AddTransactionModal";
 import QuickActionButton from "../components/home/QuickActionButton";
 import TransactionListItem from "../components/transactions/TransactionListItem";
-import { colors, fontSizes, radii, spacing } from "../constants/theme";
+import { fontSizes, radii, spacing } from "../constants/theme";
+import { useTheme, useThemedStyles } from "../context/ThemeContext";
 import { useAuth } from "../context/AuthContext";
 import { useTransactions } from "../hooks/useTransactions";
 import { formatTransactionDate, zonedDayKey } from "../utils/date";
@@ -29,6 +30,8 @@ const FILTERS = [
 ];
 
 export default function TransactionsScreen() {
+  const { colors } = useTheme();
+  const styles = useThemedStyles(createStyles);
   const { user } = useAuth();
   const [filter, setFilter] = useState(FILTERS[0]);
   const [addVisible, setAddVisible] = useState(false);
@@ -237,7 +240,8 @@ export default function TransactionsScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors) =>
+  StyleSheet.create({
   screen: { flex: 1, backgroundColor: colors.background },
   content: { padding: spacing.lg, paddingBottom: 96 },
 

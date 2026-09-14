@@ -2,13 +2,15 @@ import React, { useState } from "react";
 import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
 import { Card, CardHeader } from "../ui/Card";
 import { categoryGlyph } from "../../constants/categoryIcons";
-import { colors, fontSizes, spacing } from "../../constants/theme";
+import { fontSizes, spacing } from "../../constants/theme";
+import { useTheme, useThemedStyles } from "../../context/ThemeContext";
 import { formatMoney } from "../../utils/money";
 
 const TOP_CATEGORIES = 5;
 
 /** Where the month's expenses went, largest first. */
 export default function CategoryBreakdownCard({ categories = [], currency }) {
+  const styles = useThemedStyles(createStyles);
   const [showAll, setShowAll] = useState(false);
   const visible = showAll ? categories : categories.slice(0, TOP_CATEGORIES);
 
@@ -43,6 +45,8 @@ export default function CategoryBreakdownCard({ categories = [], currency }) {
 }
 
 function CategoryRow({ category, currency }) {
+  const { colors } = useTheme();
+  const styles = useThemedStyles(createStyles);
   // `percentage` is computed server-side against the month's total expenses.
   const share = Number.isFinite(category.percentage) ? category.percentage : 0;
   const color = category.color || colors.textMuted;
@@ -75,7 +79,8 @@ function CategoryRow({ category, currency }) {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors) =>
+  StyleSheet.create({
   link: {
     fontSize: fontSizes.meta,
     color: colors.primary,

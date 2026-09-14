@@ -11,7 +11,8 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import CashflowCard from "../components/analytics/CashflowCard";
 import CategoryDistribution from "../components/analytics/CategoryDistribution";
-import { colors, fontSizes, radii, spacing } from "../constants/theme";
+import { fontSizes, radii, spacing } from "../constants/theme";
+import { useTheme, useThemedStyles } from "../context/ThemeContext";
 import { describeApiError, isRetryableError } from "../services/api";
 import { fetchMonthlyAnalytics } from "../services/analytics";
 
@@ -34,6 +35,8 @@ function isSameOrAfter(a, b) {
 }
 
 export default function AnalyticsScreen() {
+  const { colors } = useTheme();
+  const styles = useThemedStyles(createStyles);
   const [selected, setSelected] = useState(currentPeriod);
   const [analytics, setAnalytics] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -155,6 +158,8 @@ export default function AnalyticsScreen() {
  * which keeps a quiet month readable instead of flat.
  */
 function DailyTrend({ days = [] }) {
+  const { colors } = useTheme();
+  const styles = useThemedStyles(createStyles);
   if (!days.length) {
     return null;
   }
@@ -204,7 +209,8 @@ function DailyTrend({ days = [] }) {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors) =>
+  StyleSheet.create({
   screen: { flex: 1, backgroundColor: colors.background },
   content: { padding: spacing.lg, paddingBottom: spacing.xxxl },
   center: {

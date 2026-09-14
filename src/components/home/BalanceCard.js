@@ -1,6 +1,7 @@
 import React from "react";
 import { View, Text, StyleSheet } from "react-native";
-import { colors, fontSizes, radii, shadows, spacing } from "../../constants/theme";
+import { fontSizes, radii, shadows, spacing } from "../../constants/theme";
+import { useThemedStyles } from "../../context/ThemeContext";
 import { formatMoney, formatSignedMoney } from "../../utils/money";
 
 /**
@@ -13,6 +14,7 @@ import { formatMoney, formatSignedMoney } from "../../utils/money";
  * total and the rest apart.
  */
 export default function BalanceCard({ balance, month, currency }) {
+  const styles = useThemedStyles(createStyles);
   const otherCurrencies = balance?.other_currencies || [];
 
   return (
@@ -57,6 +59,7 @@ export default function BalanceCard({ balance, month, currency }) {
 }
 
 function Flow({ label, value, align = "flex-start" }) {
+  const styles = useThemedStyles(createStyles);
   return (
     <View style={[styles.flow, { alignItems: align }]}>
       <Text style={styles.flowLabel}>{label}</Text>
@@ -65,7 +68,8 @@ function Flow({ label, value, align = "flex-start" }) {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors) =>
+  StyleSheet.create({
   card: {
     backgroundColor: colors.primary,
     borderRadius: radii.xxl,

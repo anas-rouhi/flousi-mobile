@@ -11,16 +11,17 @@ import {
   ScrollView,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { colors } from "../constants/theme";
+import { useTheme, useThemedStyles } from "../context/ThemeContext";
 import { isRetryableError } from "../services/api";
 import { useAuth } from "../context/AuthContext";
 import { describeAuthError } from "../services/auth";
 
-const BRAND = colors.primary;
 // Mirrors the API's `min:8` rule so the user is told before a round trip.
 const MIN_PASSWORD_LENGTH = 8;
 
 export default function RegisterScreen({ navigation }) {
+  const { colors } = useTheme();
+  const styles = useThemedStyles(createStyles);
   const { signUp } = useAuth();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -201,7 +202,8 @@ export default function RegisterScreen({ navigation }) {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors) =>
+  StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.surface },
   flex: { flex: 1 },
   content: { flexGrow: 1, justifyContent: "center", padding: 24 },
@@ -209,7 +211,7 @@ const styles = StyleSheet.create({
   brand: {
     fontSize: 22,
     fontWeight: "bold",
-    color: BRAND,
+    color: colors.primary,
     letterSpacing: 3,
     textAlign: "center",
   },
@@ -259,7 +261,7 @@ const styles = StyleSheet.create({
   },
 
   button: {
-    backgroundColor: BRAND,
+    backgroundColor: colors.primary,
     borderRadius: 14,
     paddingVertical: 16,
     alignItems: "center",
@@ -281,5 +283,5 @@ const styles = StyleSheet.create({
     marginTop: 22,
   },
   linkMuted: { fontSize: 14, color: colors.textMuted },
-  link: { fontSize: 14, color: BRAND, fontWeight: "bold" },
+  link: { fontSize: 14, color: colors.primary, fontWeight: "bold" },
 });

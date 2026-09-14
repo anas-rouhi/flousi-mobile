@@ -12,7 +12,7 @@ import {
   Platform,
 } from "react-native";
 import { describeApiError, describeValidationError } from "../services/api";
-import { colors } from "../constants/theme";
+import { useTheme, useThemedStyles } from "../context/ThemeContext";
 import { useAccounts } from "../hooks/useAccounts";
 import { fetchCategories } from "../services/categories";
 import { createTransaction } from "../services/transactions";
@@ -24,9 +24,6 @@ import {
   sanitizeAmountInput,
 } from "../utils/money";
 
-const BRAND = colors.primary;
-const INCOME = colors.income;
-const EXPENSE = colors.expense;
 
 /** Local midnight-anchored day key, for comparing calendar days safely. */
 function dayKey(date) {
@@ -60,6 +57,8 @@ function toTransactionDate(day) {
 }
 
 export default function AddTransactionModal({ visible, onClose, onCreated }) {
+  const { colors } = useTheme();
+  const styles = useThemedStyles(createStyles);
   const [type, setType] = useState("expense");
   const [amount, setAmount] = useState("");
   const [categoryId, setCategoryId] = useState(null);
@@ -148,7 +147,7 @@ export default function AddTransactionModal({ visible, onClose, onCreated }) {
   const currency = selectedAccount?.currency || "MAD";
   const centimes = amountToCentimes(amount);
   const isToday = dayKey(day) === dayKey(startOfToday());
-  const accent = type === "expense" ? EXPENSE : INCOME;
+  const accent = type === "expense" ? colors.expense : colors.income;
 
   /** Blocking problems, in the order the user would fix them. */
   const validate = () => {
@@ -225,13 +224,13 @@ export default function AddTransactionModal({ visible, onClose, onCreated }) {
                 <SegmentButton
                   label="مصروف"
                   active={type === "expense"}
-                  activeColor={EXPENSE}
+                  activeColor={colors.expense}
                   onPress={() => setType("expense")}
                 />
                 <SegmentButton
                   label="مدخول"
                   active={type === "income"}
-                  activeColor={INCOME}
+                  activeColor={colors.income}
                   onPress={() => setType("income")}
                 />
               </View>
@@ -269,7 +268,7 @@ export default function AddTransactionModal({ visible, onClose, onCreated }) {
 
               {loadingLookups ? (
                 <ActivityIndicator
-                  color={BRAND}
+                  color={colors.primary}
                   style={styles.lookupSpinner}
                   size="small"
                 />
@@ -311,7 +310,7 @@ export default function AddTransactionModal({ visible, onClose, onCreated }) {
                       label={account.name}
                       meta={account.balance_formatted}
                       active={account.id === accountId}
-                      activeColor={account.color || BRAND}
+                      activeColor={account.color || colors.primary}
                       onPress={() => setAccountId(account.id)}
                     />
                   ))}
@@ -419,6 +418,7 @@ export default function AddTransactionModal({ visible, onClose, onCreated }) {
 }
 
 function SegmentButton({ label, active, activeColor, onPress }) {
+  const styles = useThemedStyles(createStyles);
   return (
     <TouchableOpacity
       style={[
@@ -438,6 +438,8 @@ function SegmentButton({ label, active, activeColor, onPress }) {
 }
 
 function Chip({ label, meta, active, activeColor, onPress }) {
+  const { colors } = useTheme();
+  const styles = useThemedStyles(createStyles);
   return (
     <TouchableOpacity
       style={[
@@ -456,6 +458,8 @@ function Chip({ label, meta, active, activeColor, onPress }) {
 }
 
 function CategoryTile({ category, active, onPress }) {
+  const { colors } = useTheme();
+  const styles = useThemedStyles(createStyles);
   const color = category.color || colors.textMuted;
   return (
     <TouchableOpacity
@@ -477,7 +481,8 @@ function CategoryTile({ category, active, onPress }) {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors) =>
+  StyleSheet.create({
   backdrop: {
     flex: 1,
     backgroundColor: "rgba(0,0,0,0.45)",
@@ -557,7 +562,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   lookupErrorText: { color: colors.dangerText, fontSize: 13, textAlign: "center" },
-  lookupRetry: { color: BRAND, fontWeight: "bold", fontSize: 13, marginTop: 6 },
+  lookupRetry: { color: colors.primary, fontWeight: "bold", fontSize: 13, marginTop: 6 },
   lookupSpinner: { marginTop: 16 },
 
   label: {
@@ -583,7 +588,7 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   noAccountButton: {
-    backgroundColor: BRAND,
+    backgroundColor: colors.primary,
     borderRadius: 10,
     paddingVertical: 12,
     alignItems: "center",
@@ -652,9 +657,9 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     paddingHorizontal: 18,
   },
-  datePickActive: { borderColor: BRAND, backgroundColor: colors.primarySoft },
+  datePickActive: { borderColor: colors.primary, backgroundColor: colors.primarySoft },
   datePickText: { fontSize: 14, fontWeight: "600", color: colors.textSecondary },
-  datePickTextActive: { color: BRAND },
+  datePickTextActive: { color: colors.primary },
   stepper: {
     flexDirection: "row-reverse",
     alignItems: "center",

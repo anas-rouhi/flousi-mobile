@@ -21,7 +21,8 @@ import CategoryBreakdownCard from "../components/home/CategoryBreakdownCard";
 import MonthFlowCard from "../components/home/MonthFlowCard";
 import QuickActionButton from "../components/home/QuickActionButton";
 import RecentTransactionsList from "../components/home/RecentTransactionsList";
-import { colors, fontSizes, radii, spacing } from "../constants/theme";
+import { fontSizes, radii, spacing } from "../constants/theme";
+import { useTheme, useThemedStyles } from "../context/ThemeContext";
 import { useAuth } from "../context/AuthContext";
 import { useAccounts } from "../hooks/useAccounts";
 import { useBudget } from "../hooks/useBudget";
@@ -43,6 +44,8 @@ function firstName(user) {
  * open; every piece of presentation lives in `components/home/`.
  */
 export default function HomeScreen() {
+  const { colors } = useTheme();
+  const styles = useThemedStyles(createStyles);
   const { user, signOut } = useAuth();
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -357,7 +360,8 @@ export default function HomeScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors) =>
+  StyleSheet.create({
   screen: { flex: 1, backgroundColor: colors.background },
   container: { flex: 1, backgroundColor: colors.background },
   content: { padding: spacing.lg, paddingBottom: spacing.xxxl },

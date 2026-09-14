@@ -7,17 +7,22 @@ import {
   ActivityIndicator,
 } from "react-native";
 import { Card, CardHeader } from "../ui/Card";
-import { colors, fontSizes, radii, spacing } from "../../constants/theme";
+import { fontSizes, radii, spacing } from "../../constants/theme";
+import { useTheme, useThemedStyles } from "../../context/ThemeContext";
 import { BUDGET_STATE } from "../../hooks/useBudget";
 import { MONTH_NAMES } from "../../utils/date";
 import { formatCentimes } from "../../utils/money";
 
-/** Bar and accent colour per budget state. */
-const STATE_COLORS = {
-  [BUDGET_STATE.healthy]: colors.budgetHealthy,
-  [BUDGET_STATE.warning]: colors.budgetWarning,
-  [BUDGET_STATE.over]: colors.budgetOver,
-};
+/** Bar and accent colour per budget state, in the active palette. */
+function stateColor(state, colors) {
+  if (state === BUDGET_STATE.over) {
+    return colors.budgetOver;
+  }
+  if (state === BUDGET_STATE.warning) {
+    return colors.budgetWarning;
+  }
+  return colors.budgetHealthy;
+}
 
 /**
  * The month name, from either period shape the card can be handed:
@@ -60,6 +65,8 @@ export default function BudgetCard({
   loading,
   onSetBudget,
 }) {
+  const { colors } = useTheme();
+  const styles = useThemedStyles(createStyles);
   // ---- State A: nothing configured yet ----
   if (!hasBudget) {
     // The banner renders even while the budget request is still in flight: a
@@ -89,7 +96,7 @@ export default function BudgetCard({
   }
 
   // ---- State B: active budget ----
-  const accent = STATE_COLORS[state] || colors.budgetHealthy;
+  const accent = stateColor(state, colors);
   const overspent = remainingCentimes < 0;
   const rounded = Math.round(percentage);
 
@@ -164,7 +171,8 @@ export default function BudgetCard({
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors) =>
+  StyleSheet.create({
   emptyCard: { alignItems: "center" },
   emptyTitle: {
     fontSize: fontSizes.bodyLarge,

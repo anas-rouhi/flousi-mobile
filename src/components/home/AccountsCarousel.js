@@ -8,7 +8,8 @@ import {
   ActivityIndicator,
 } from "react-native";
 import { Card, CardHeader, CardHeaderMeta } from "../ui/Card";
-import { colors, fontSizes, radii, spacing } from "../../constants/theme";
+import { fontSizes, radii, spacing } from "../../constants/theme";
+import { useTheme, useThemedStyles } from "../../context/ThemeContext";
 
 /** Arabic label per account type, matching the API's enum. */
 const TYPE_LABELS = {
@@ -33,6 +34,8 @@ export default function AccountsCarousel({
   onSelect,
   onAddAccount,
 }) {
+  const { colors } = useTheme();
+  const styles = useThemedStyles(createStyles);
   return (
     <Card>
       <CardHeader
@@ -99,7 +102,8 @@ export default function AccountsCarousel({
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors) =>
+  StyleSheet.create({
   row: { flexDirection: "row-reverse", paddingLeft: spacing.xs },
 
   tile: {

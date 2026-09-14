@@ -11,7 +11,8 @@ import {
   KeyboardAvoidingView,
   Platform,
 } from "react-native";
-import { colors, fontSizes, radii, spacing } from "../../constants/theme";
+import { fontSizes, radii, spacing } from "../../constants/theme";
+import { useTheme, useThemedStyles } from "../../context/ThemeContext";
 import { describeValidationError } from "../../services/api";
 import { createAccount } from "../../services/accounts";
 import {
@@ -37,6 +38,8 @@ export default function CreateAccountModal({
   onCreated,
   currency = "MAD",
 }) {
+  const { colors } = useTheme();
+  const styles = useThemedStyles(createStyles);
   const [name, setName] = useState("");
   const [type, setType] = useState("cash");
   const [balance, setBalance] = useState("");
@@ -208,7 +211,8 @@ export default function CreateAccountModal({
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors) =>
+  StyleSheet.create({
   backdrop: {
     flex: 1,
     backgroundColor: colors.scrim,

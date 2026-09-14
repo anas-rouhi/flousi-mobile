@@ -1,7 +1,8 @@
 import React from "react";
 import { Text, StyleSheet } from "react-native";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
-import { colors, fontSizes } from "../constants/theme";
+import { fontSizes } from "../constants/theme";
+import { useTheme, useThemedStyles } from "../context/ThemeContext";
 import AnalyticsScreen from "../screens/AnalyticsScreen";
 import HomeScreen from "../screens/HomeScreen";
 import SettingsScreen from "../screens/SettingsScreen";
@@ -15,6 +16,7 @@ const Tab = createBottomTabNavigator();
  * font loading and renders identically on both platforms.
  */
 function TabIcon({ glyph, focused }) {
+  const styles = useThemedStyles(createStyles);
   return (
     <Text style={[styles.icon, focused && styles.iconFocused]}>{glyph}</Text>
   );
@@ -54,6 +56,8 @@ const TABS = [
  * bar itself, so each one refreshes its own data after a save.
  */
 export default function TabNavigator() {
+  const { colors } = useTheme();
+  const styles = useThemedStyles(createStyles);
   return (
     <Tab.Navigator
       screenOptions={{
@@ -82,7 +86,8 @@ export default function TabNavigator() {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors) =>
+  StyleSheet.create({
   bar: {
     backgroundColor: colors.tabBar,
     borderTopColor: colors.border,

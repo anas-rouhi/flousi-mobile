@@ -11,7 +11,8 @@ import {
   KeyboardAvoidingView,
   Platform,
 } from "react-native";
-import { colors, fontSizes, radii, spacing } from "../../constants/theme";
+import { fontSizes, radii, spacing } from "../../constants/theme";
+import { useTheme, useThemedStyles } from "../../context/ThemeContext";
 import {
   amountToCentimes,
   currencySymbol,
@@ -35,6 +36,8 @@ export default function SetBudgetModal({
   saving = false,
   error = null,
 }) {
+  const { colors } = useTheme();
+  const styles = useThemedStyles(createStyles);
   const [amount, setAmount] = useState("");
   const [localError, setLocalError] = useState(null);
   const submittingRef = useRef(false);
@@ -171,7 +174,8 @@ export default function SetBudgetModal({
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors) =>
+  StyleSheet.create({
   backdrop: {
     flex: 1,
     backgroundColor: colors.scrim,

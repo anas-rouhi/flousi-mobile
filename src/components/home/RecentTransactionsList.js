@@ -2,7 +2,8 @@ import React, { useMemo } from "react";
 import { View, Text, StyleSheet } from "react-native";
 import { Card, CardHeader, CardHeaderMeta } from "../ui/Card";
 import { categoryGlyph } from "../../constants/categoryIcons";
-import { colors, fontSizes, radii, spacing } from "../../constants/theme";
+import { fontSizes, radii, spacing } from "../../constants/theme";
+import { useTheme, useThemedStyles } from "../../context/ThemeContext";
 import { formatTransactionDate, zonedDayKey } from "../../utils/date";
 import { formatSignedMoney } from "../../utils/money";
 
@@ -15,6 +16,7 @@ import { formatSignedMoney } from "../../utils/money";
  * newest-first, so the groups keep that order without re-sorting.
  */
 export default function RecentTransactionsList({ transactions = [], timezone }) {
+  const styles = useThemedStyles(createStyles);
   const groups = useMemo(() => {
     const byDay = new Map();
 
@@ -79,6 +81,8 @@ export default function RecentTransactionsList({ transactions = [], timezone }) 
 }
 
 function TransactionRow({ transaction, isLast }) {
+  const { colors } = useTheme();
+  const styles = useThemedStyles(createStyles);
   const isExpense = transaction.type === "expense";
   const color = isExpense ? colors.expense : colors.income;
   const category = transaction.category;
@@ -128,7 +132,8 @@ function TransactionRow({ transaction, isLast }) {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors) =>
+  StyleSheet.create({
   groupSpaced: { marginTop: spacing.lg },
   dayHeading: {
     fontSize: fontSizes.small,

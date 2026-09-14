@@ -1,6 +1,7 @@
 import React from "react";
 import { Text, StyleSheet, TouchableOpacity } from "react-native";
-import { colors, shadows } from "../../constants/theme";
+import { shadows } from "../../constants/theme";
+import { useThemedStyles } from "../../context/ThemeContext";
 
 /**
  * The floating primary action. Pinned bottom-right by the screen that hosts it,
@@ -12,6 +13,7 @@ export default function QuickActionButton({
   label = "زيد معاملة جديدة",
   style,
 }) {
+  const styles = useThemedStyles(createStyles);
   return (
     <TouchableOpacity
       style={[styles.fab, style]}
@@ -25,7 +27,8 @@ export default function QuickActionButton({
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors) =>
+  StyleSheet.create({
   fab: {
     position: "absolute",
     bottom: 28,

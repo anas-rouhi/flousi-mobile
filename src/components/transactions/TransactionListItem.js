@@ -7,11 +7,12 @@ import {
   ActivityIndicator,
 } from "react-native";
 import { categoryGlyph } from "../../constants/categoryIcons";
-import { colors, fontSizes, radii, spacing } from "../../constants/theme";
+import { fontSizes, radii, spacing } from "../../constants/theme";
+import { useTheme, useThemedStyles } from "../../context/ThemeContext";
 import { formatMoney } from "../../utils/money";
 
 /** Transfers are neither a gain nor a loss, so they get their own colour. */
-function directionFor(type) {
+function directionFor(type, colors) {
   if (type === "income") {
     return { color: colors.income, sign: "+" };
   }
@@ -32,7 +33,9 @@ export default function TransactionListItem({
   deleting = false,
   isLast = false,
 }) {
-  const { color, sign } = directionFor(transaction.type);
+  const { colors } = useTheme();
+  const styles = useThemedStyles(createStyles);
+  const { color, sign } = directionFor(transaction.type, colors);
   const category = transaction.category;
 
   const title = transaction.description || category?.name || "معاملة";
@@ -86,7 +89,8 @@ export default function TransactionListItem({
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors) =>
+  StyleSheet.create({
   row: {
     flexDirection: "row-reverse",
     alignItems: "center",

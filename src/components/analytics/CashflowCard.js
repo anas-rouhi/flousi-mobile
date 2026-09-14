@@ -1,7 +1,8 @@
 import React from "react";
 import { View, Text, StyleSheet } from "react-native";
 import { Card, CardHeader } from "../ui/Card";
-import { colors, fontSizes, radii, spacing } from "../../constants/theme";
+import { fontSizes, radii, spacing } from "../../constants/theme";
+import { useTheme, useThemedStyles } from "../../context/ThemeContext";
 
 /**
  * Income, expense and the net between them.
@@ -11,6 +12,8 @@ import { colors, fontSizes, radii, spacing } from "../../constants/theme";
  * `{ amount, amount_formatted }` object the dashboard uses.
  */
 export default function CashflowCard({ summary }) {
+  const { colors } = useTheme();
+  const styles = useThemedStyles(createStyles);
   const net = summary?.net_savings ?? 0;
   const netColor = net < 0 ? colors.expense : colors.primary;
   const rate = summary?.savings_rate_percentage;
@@ -66,6 +69,7 @@ export default function CashflowCard({ summary }) {
 }
 
 function Figure({ label, value, color, align = "flex-start" }) {
+  const styles = useThemedStyles(createStyles);
   return (
     <View style={[styles.figure, { alignItems: align }]}>
       <Text style={styles.figureLabel}>{label}</Text>
@@ -74,7 +78,8 @@ function Figure({ label, value, color, align = "flex-start" }) {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors) =>
+  StyleSheet.create({
   row: { flexDirection: "row-reverse", alignItems: "center" },
   figure: { flex: 1 },
   divider: {

@@ -10,8 +10,16 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Card, CardHeader } from "../components/ui/Card";
-import { colors, fontSizes, radii, spacing } from "../constants/theme";
+import { fontSizes, radii, spacing } from "../constants/theme";
+import { useTheme, useThemedStyles } from "../context/ThemeContext";
 import { useAuth } from "../context/AuthContext";
+
+/** System / Light / Dark, in the order people expect to scan them. */
+const THEME_OPTIONS = [
+  { value: "system", glyph: "⚙️", label: "النظام" },
+  { value: "light", glyph: "☀️", label: "فاتح" },
+  { value: "dark", glyph: "🌙", label: "غامق" },
+];
 
 const LANGUAGE_NAMES = { ar: "العربية / الدارجة", fr: "Français", en: "English" };
 
@@ -24,6 +32,8 @@ const LANGUAGE_NAMES = { ar: "العربية / الدارجة", fr: "Français",
  * They become live the moment those endpoints exist.
  */
 export default function SettingsScreen() {
+  const { colors, mode, scheme, setMode } = useTheme();
+  const styles = useThemedStyles(createStyles);
   const { user, signOut } = useAuth();
   const [signingOut, setSigningOut] = useState(false);
 
@@ -91,14 +101,44 @@ export default function SettingsScreen() {
             onPress={() => notAvailable("تبديل اللغة")}
           />
           <Row label="العملة" value={user?.preferred_currency || "—"} readOnly />
-          <Row label="المنطقة الزمنية" value={user?.timezone || "—"} readOnly />
           <Row
-            label="الوضع الليلي"
-            value="مطفي"
-            hint="الثيم الداكن مازال ما تصاوبش"
-            onPress={() => notAvailable("الوضع الليلي")}
+            label="المنطقة الزمنية"
+            value={user?.timezone || "—"}
+            readOnly
             isLast
           />
+        </Card>
+
+        {/* Appearance — this one is fully live */}
+        <Card>
+          <CardHeader title="المظهر" />
+          <View style={styles.modes}>
+            {THEME_OPTIONS.map((option) => {
+              const active = option.value === mode;
+              return (
+                <TouchableOpacity
+                  key={option.value}
+                  style={[styles.mode, active && styles.modeActive]}
+                  onPress={() => setMode(option.value)}
+                  activeOpacity={0.8}
+                  accessibilityRole="button"
+                  accessibilityState={{ selected: active }}
+                >
+                  <Text style={styles.modeGlyph}>{option.glyph}</Text>
+                  <Text
+                    style={[styles.modeLabel, active && styles.modeLabelActive]}
+                  >
+                    {option.label}
+                  </Text>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+          <Text style={styles.modeHint}>
+            {mode === "system"
+              ? `كيتبع الجهاز — دابا ${scheme === "dark" ? "غامق" : "فاتح"}`
+              : "محدد يدويا"}
+          </Text>
         </Card>
 
         {/* Account */}
@@ -131,6 +171,7 @@ export default function SettingsScreen() {
 }
 
 function Row({ label, value, hint, onPress, readOnly = false, isLast = false }) {
+  const styles = useThemedStyles(createStyles);
   const Wrapper = readOnly ? View : TouchableOpacity;
 
   return (
@@ -150,7 +191,8 @@ function Row({ label, value, hint, onPress, readOnly = false, isLast = false }) 
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors) =>
+  StyleSheet.create({
   screen: { flex: 1, backgroundColor: colors.background },
   content: { padding: spacing.lg, paddingBottom: spacing.xxxl },
 
@@ -245,6 +287,34 @@ const styles = StyleSheet.create({
     fontSize: fontSizes.body,
     fontWeight: "600",
     color: colors.textMuted,
+  },
+
+  modes: { flexDirection: "row-reverse" },
+  mode: {
+    flex: 1,
+    alignItems: "center",
+    paddingVertical: spacing.md,
+    marginLeft: spacing.sm,
+    borderRadius: radii.md,
+    borderWidth: 1.5,
+    borderColor: colors.border,
+  },
+  modeActive: {
+    borderColor: colors.primary,
+    backgroundColor: colors.primarySoft,
+  },
+  modeGlyph: { fontSize: 18, marginBottom: 4 },
+  modeLabel: {
+    fontSize: fontSizes.meta,
+    fontWeight: "600",
+    color: colors.textSecondary,
+  },
+  modeLabelActive: { color: colors.primary, fontWeight: "bold" },
+  modeHint: {
+    fontSize: fontSizes.caption,
+    color: colors.textMuted,
+    textAlign: "right",
+    marginTop: spacing.sm,
   },
 
   version: {
