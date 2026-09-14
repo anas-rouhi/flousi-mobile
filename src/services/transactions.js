@@ -42,28 +42,34 @@ export async function createTransaction({
 /**
  * GET /api/v1/transactions — paginated history, newest first.
  *
- * Supported filters: `type` (income|expense|transfer), `account_id`,
- * `category_id`, `from`/`to` dates, and `month`+`year` which are
+ * Supported filters: `search`, `type` (income|expense|transfer),
+ * `account_id`, `category_id`, `from`/`to` dates, and `month`+`year` which are
  * `required_with` each other (a lone `month` is a 422).
  *
- * There is deliberately no text-search parameter on the API, so description
- * search is applied client-side over the pages already loaded — see
- * `useTransactions`.
+ * `search` matches **`description` only** — not category or account names. The
+ * server escapes `%` and `_` in the term, so a literal underscore or percent
+ * sign searches for itself instead of acting as a wildcard. Filters combine, so
+ * `?search=pizza&type=expense` narrows on both, and pagination applies to the
+ * filtered set.
  *
  * @returns {Promise<{rows: object[], page: number, lastPage: number, total: number}>}
  */
 export async function fetchTransactions({
   page = 1,
   perPage = 20,
+  search,
   type,
   accountId,
   categoryId,
   signal,
 } = {}) {
+  const term = search?.trim();
+
   const response = await api.get("/transactions", {
     params: {
       page,
       per_page: perPage,
+      ...(term ? { search: term } : {}),
       ...(type ? { type } : {}),
       ...(accountId ? { account_id: accountId } : {}),
       ...(categoryId ? { category_id: categoryId } : {}),

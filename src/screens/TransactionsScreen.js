@@ -37,8 +37,9 @@ export default function TransactionsScreen() {
     transactions,
     query,
     setQuery,
+    clearSearch,
+    activeTerm,
     isSearching,
-    searchScope,
     total,
     loading,
     refreshing,
@@ -107,15 +108,30 @@ export default function TransactionsScreen() {
 
   const controls = (
     <View>
-      <TextInput
-        style={styles.search}
-        value={query}
-        onChangeText={setQuery}
-        placeholder="قلب على معاملة…"
-        placeholderTextColor={colors.textPlaceholder}
-        returnKeyType="search"
-        clearButtonMode="while-editing"
-      />
+      <View style={styles.searchRow}>
+        <TextInput
+          style={styles.search}
+          value={query}
+          onChangeText={setQuery}
+          placeholder="قلب فـ الوصف…"
+          placeholderTextColor={colors.textPlaceholder}
+          returnKeyType="search"
+          clearButtonMode="while-editing"
+          autoCorrect={false}
+        />
+        {/* Android has no clearButtonMode, so the control is explicit. */}
+        {query.length > 0 ? (
+          <TouchableOpacity
+            style={styles.clear}
+            onPress={clearSearch}
+            hitSlop={10}
+            accessibilityRole="button"
+            accessibilityLabel="امسح البحث"
+          >
+            <Text style={styles.clearText}>✕</Text>
+          </TouchableOpacity>
+        ) : null}
+      </View>
 
       <View style={styles.chips}>
         {FILTERS.map((option) => {
@@ -134,14 +150,6 @@ export default function TransactionsScreen() {
           );
         })}
       </View>
-
-      {/* Search only covers what has been paged in, so say so rather than
-          letting an empty result imply the transaction does not exist. */}
-      {isSearching && searchScope.loaded < searchScope.total ? (
-        <Text style={styles.searchNote}>
-          كنقلبو فـ {searchScope.loaded} من {searchScope.total} معاملة المحمّلة
-        </Text>
-      ) : null}
 
       {error ? <Text style={styles.error}>{error}</Text> : null}
     </View>
@@ -189,22 +197,25 @@ export default function TransactionsScreen() {
           ) : (
             <View style={styles.empty}>
               <Text style={styles.emptyTitle}>
-                {isSearching ? "ما لقيناش شي معاملة" : "ما كاينة حتى معاملة"}
+                {isSearching
+                  ? `ما لقيناش نتائج لـ «${activeTerm}»`
+                  : "ما كاينة حتى معاملة"}
               </Text>
               <Text style={styles.emptySubtitle}>
                 {isSearching
-                  ? "بدل كلمة البحث ولا جبد باش تحمّل المزيد"
+                  ? "البحث كيقلب فـ الوصف فقط"
                   : "زيد أول معاملة بالزر لتحت"}
               </Text>
             </View>
           )
         }
-        onEndReached={isSearching ? undefined : loadMore}
+        // Paging now applies to the filtered set, so it stays on during search.
+        onEndReached={loadMore}
         onEndReachedThreshold={0.4}
         ListFooterComponent={
           loadingMore ? (
             <ActivityIndicator color={colors.primary} style={styles.spinner} />
-          ) : hasMore && !isSearching ? (
+          ) : hasMore ? (
             <TouchableOpacity style={styles.more} onPress={loadMore}>
               <Text style={styles.moreText}>حمّل المزيد</Text>
             </TouchableOpacity>
@@ -245,17 +256,25 @@ const styles = StyleSheet.create({
     textAlign: "right",
   },
 
+  searchRow: { position: "relative", justifyContent: "center" },
   search: {
     backgroundColor: colors.surface,
     borderWidth: 1,
     borderColor: colors.border,
     borderRadius: radii.lg,
     paddingHorizontal: spacing.lg,
+    paddingLeft: 40,
     paddingVertical: spacing.md,
     fontSize: fontSizes.body,
     color: colors.text,
     textAlign: "right",
   },
+  clear: {
+    position: "absolute",
+    left: spacing.md,
+    padding: spacing.xs,
+  },
+  clearText: { fontSize: fontSizes.body, color: colors.textMuted },
 
   chips: {
     flexDirection: "row-reverse",
@@ -283,12 +302,6 @@ const styles = StyleSheet.create({
   },
   chipTextActive: { color: colors.primary, fontWeight: "bold" },
 
-  searchNote: {
-    fontSize: fontSizes.small,
-    color: colors.textMuted,
-    textAlign: "right",
-    marginBottom: spacing.sm,
-  },
   error: {
     backgroundColor: colors.dangerSurface,
     color: colors.dangerText,

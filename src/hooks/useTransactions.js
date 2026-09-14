@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { describeApiError } from "../services/api";
 import {
   deleteTransaction,
@@ -7,18 +7,23 @@ import {
 
 const PER_PAGE = 20;
 
+/** Long enough to skip intermediate keystrokes, short enough to feel live. */
+const SEARCH_DEBOUNCE_MS = 350;
+
 /**
- * Paginated transaction history with a type filter and description search.
+ * Paginated transaction history, filtered entirely server-side.
  *
- * Search is client-side by necessity: the API exposes no text-search parameter,
- * so it filters the pages already loaded. That is honest but partial — a match
- * on page 5 is invisible until page 5 is reached — which is why `searchScope`
- * is reported back for the UI to say so rather than implying a full-corpus
- * search. Filtering by type *is* server-side, so it always covers everything.
+ * Both the type filter and the search term go to the API, so results cover
+ * every record rather than the pages already loaded, and pagination applies to
+ * the filtered set. The search term is debounced so a typed word costs one
+ * request instead of one per character.
+ *
+ * The API matches `search` against `description` only.
  */
 export function useTransactions({ type = null } = {}) {
   const [rows, setRows] = useState([]);
   const [query, setQuery] = useState("");
+  const [term, setTerm] = useState("");
   const [page, setPage] = useState(1);
   const [lastPage, setLastPage] = useState(1);
   const [total, setTotal] = useState(0);
@@ -30,6 +35,17 @@ export function useTransactions({ type = null } = {}) {
 
   // Guards against a scroll event firing another page request mid-flight.
   const inFlight = useRef(false);
+
+  // Debounce: `query` drives the input, `term` drives the request.
+  useEffect(() => {
+    const trimmed = query.trim();
+    if (trimmed === term) {
+      return;
+    }
+
+    const timer = setTimeout(() => setTerm(trimmed), SEARCH_DEBOUNCE_MS);
+    return () => clearTimeout(timer);
+  }, [query, term]);
 
   const loadPage = useCallback(
     async (targetPage, { append = false } = {}) => {
@@ -43,6 +59,7 @@ export function useTransactions({ type = null } = {}) {
         const result = await fetchTransactions({
           page: targetPage,
           perPage: PER_PAGE,
+          search: term || undefined,
           type: type ?? undefined,
         });
 
@@ -62,13 +79,17 @@ export function useTransactions({ type = null } = {}) {
         setLoadingMore(false);
       }
     },
-    [type],
+    [type, term],
   );
 
-  // A changed filter restarts from page 1 rather than appending to stale rows.
+  /**
+   * A changed filter or search term restarts at page 1. Rows are cleared at the
+   * same time so the spinner never sits over results from the previous term.
+   */
   useEffect(() => {
     setLoading(true);
     setRows([]);
+    setPage(1);
     loadPage(1);
   }, [loadPage]);
 
@@ -84,6 +105,11 @@ export function useTransactions({ type = null } = {}) {
     setLoadingMore(true);
     loadPage(page + 1, { append: true });
   }, [loading, loadingMore, page, lastPage, loadPage]);
+
+  const clearSearch = useCallback(() => {
+    setQuery("");
+    setTerm("");
+  }, []);
 
   const remove = useCallback(async (id) => {
     setDeletingId(id);
@@ -103,28 +129,17 @@ export function useTransactions({ type = null } = {}) {
     }
   }, []);
 
-  const trimmed = query.trim().toLowerCase();
-
-  const visible = useMemo(() => {
-    if (!trimmed) {
-      return rows;
-    }
-    // Description first, then the category and account names — all three are
-    // what someone would actually remember about a transaction.
-    return rows.filter((row) =>
-      [row.description, row.category?.name, row.account?.name]
-        .filter(Boolean)
-        .some((field) => String(field).toLowerCase().includes(trimmed)),
-    );
-  }, [rows, trimmed]);
-
   return {
-    transactions: visible,
+    // Straight from the API — there is no local filtering left.
+    transactions: rows,
     query,
     setQuery,
-    isSearching: Boolean(trimmed),
-    /** How much of the corpus the client-side search actually covered. */
-    searchScope: { loaded: rows.length, total },
+    clearSearch,
+    /** The term actually applied server-side, for the empty-state message. */
+    activeTerm: term,
+    isSearching: term.length > 0,
+    /** True while a new term or filter is being fetched, with rows cleared. */
+    searchPending: loading && term.length > 0,
     total,
     loading,
     refreshing,
