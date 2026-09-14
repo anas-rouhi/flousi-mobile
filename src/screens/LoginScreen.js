@@ -190,7 +190,7 @@ const createStyles = (colors) =>
     fontSize: 13,
     fontWeight: "600",
     color: colors.textSecondary,
-    textAlign: "right",
+    textAlign: "auto",
     marginBottom: 6,
   },
   input: {
@@ -203,7 +203,7 @@ const createStyles = (colors) =>
     fontSize: 15,
     color: colors.text,
     marginBottom: 16,
-    textAlign: "right",
+    textAlign: "auto",
   },
 
   button: {
@@ -217,7 +217,7 @@ const createStyles = (colors) =>
   buttonText: { color: colors.onPrimary, fontSize: 16, fontWeight: "bold" },
 
   linkRow: {
-    flexDirection: "row-reverse",
+    flexDirection: "row",
     justifyContent: "center",
     marginTop: 22,
   },

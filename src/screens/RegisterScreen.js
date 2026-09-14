@@ -244,7 +244,7 @@ const createStyles = (colors) =>
     fontSize: 13,
     fontWeight: "600",
     color: colors.textSecondary,
-    textAlign: "right",
+    textAlign: "auto",
     marginBottom: 6,
   },
   input: {
@@ -257,7 +257,7 @@ const createStyles = (colors) =>
     fontSize: 15,
     color: colors.text,
     marginBottom: 16,
-    textAlign: "right",
+    textAlign: "auto",
   },
 
   button: {
@@ -269,16 +269,16 @@ const createStyles = (colors) =>
   },
   buttonDisabled: { opacity: 0.7 },
   buttonText: { color: colors.onPrimary, fontSize: 16, fontWeight: "bold" },
-  buttonLoading: { flexDirection: "row-reverse", alignItems: "center" },
+  buttonLoading: { flexDirection: "row", alignItems: "center" },
   buttonLoadingText: {
     color: colors.onPrimary,
     fontSize: 15,
     fontWeight: "600",
-    marginRight: 10,
+    marginEnd: 10,
   },
 
   linkRow: {
-    flexDirection: "row-reverse",
+    flexDirection: "row",
     justifyContent: "center",
     marginTop: 22,
   },

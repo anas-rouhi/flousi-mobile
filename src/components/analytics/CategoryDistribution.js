@@ -119,17 +119,17 @@ const createStyles = (colors) =>
     fontSize: fontSizes.caption,
     fontWeight: "700",
     color: colors.primary,
-    textAlign: "right",
+    textAlign: "auto",
     marginBottom: 6,
   },
-  topRow: { flexDirection: "row-reverse", alignItems: "center" },
-  topGlyph: { fontSize: 20, marginLeft: spacing.sm },
+  topRow: { flexDirection: "row", alignItems: "center" },
+  topGlyph: { fontSize: 20, marginStart: spacing.sm },
   topName: {
     flex: 1,
     fontSize: fontSizes.bodyLarge,
     fontWeight: "bold",
     color: colors.text,
-    textAlign: "right",
+    textAlign: "auto",
   },
   topAmount: {
     fontSize: fontSizes.bodyLarge,
@@ -139,17 +139,17 @@ const createStyles = (colors) =>
 
   row: { marginBottom: spacing.lg },
   head: {
-    flexDirection: "row-reverse",
+    flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
     marginBottom: spacing.sm,
   },
   identity: {
-    flexDirection: "row-reverse",
+    flexDirection: "row",
     alignItems: "center",
     flexShrink: 1,
   },
-  glyph: { fontSize: 15, marginLeft: 7 },
+  glyph: { fontSize: 15, marginStart: 7 },
   name: {
     fontSize: fontSizes.body,
     fontWeight: "600",
@@ -158,12 +158,12 @@ const createStyles = (colors) =>
   },
   nameTop: { fontWeight: "bold" },
 
-  amounts: { flexDirection: "row-reverse", alignItems: "center" },
+  amounts: { flexDirection: "row", alignItems: "center" },
   pill: {
     borderRadius: radii.pill,
     paddingVertical: 2,
     paddingHorizontal: 7,
-    marginLeft: spacing.sm,
+    marginStart: spacing.sm,
   },
   pillText: { fontSize: fontSizes.caption, fontWeight: "bold" },
   amount: {
@@ -177,13 +177,13 @@ const createStyles = (colors) =>
     borderRadius: 4,
     backgroundColor: colors.track,
     overflow: "hidden",
-    flexDirection: "row-reverse",
+    flexDirection: "row",
   },
   fill: { height: "100%", borderRadius: 4 },
   meta: {
     fontSize: fontSizes.small,
     color: colors.textMuted,
     marginTop: 6,
-    textAlign: "right",
+    textAlign: "auto",
   },
 });

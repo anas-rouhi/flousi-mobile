@@ -94,17 +94,17 @@ const createStyles = (colors) =>
 
   row: { marginBottom: spacing.lg },
   header: {
-    flexDirection: "row-reverse",
+    flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
     marginBottom: spacing.sm,
   },
   identity: {
-    flexDirection: "row-reverse",
+    flexDirection: "row",
     alignItems: "center",
     flexShrink: 1,
   },
-  glyph: { fontSize: 15, marginLeft: 7 },
+  glyph: { fontSize: 15, marginStart: 7 },
   name: {
     fontSize: fontSizes.bodyLarge,
     fontWeight: "600",
@@ -115,7 +115,7 @@ const createStyles = (colors) =>
     fontSize: fontSizes.bodyLarge,
     fontWeight: "bold",
     color: colors.text,
-    marginRight: spacing.sm,
+    marginEnd: spacing.sm,
   },
 
   track: {
@@ -123,13 +123,13 @@ const createStyles = (colors) =>
     borderRadius: 4,
     backgroundColor: colors.track,
     overflow: "hidden",
-    flexDirection: "row-reverse",
+    flexDirection: "row",
   },
   fill: { height: "100%", borderRadius: 4 },
   meta: {
     fontSize: fontSizes.small,
     color: colors.textMuted,
     marginTop: 6,
-    textAlign: "right",
+    textAlign: "auto",
   },
 });

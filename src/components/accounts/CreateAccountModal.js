@@ -21,6 +21,7 @@ import {
   formatCentimes,
   sanitizeAmountInput,
 } from "../../utils/money";
+import { fixedLtrRow } from "../../utils/rtl";
 
 /**
  * Account types the API accepts. `other` is in the enum too but is omitted
@@ -235,7 +236,7 @@ const createStyles = (colors) =>
     marginTop: 10,
   },
   header: {
-    flexDirection: "row-reverse",
+    flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
     paddingVertical: 14,
@@ -255,7 +256,7 @@ const createStyles = (colors) =>
     fontSize: fontSizes.meta,
     fontWeight: "600",
     color: colors.textSecondary,
-    textAlign: "right",
+    textAlign: "auto",
     marginTop: spacing.lg,
     marginBottom: spacing.sm,
   },
@@ -268,17 +269,17 @@ const createStyles = (colors) =>
     paddingVertical: 13,
     fontSize: fontSizes.bodyLarge,
     color: colors.text,
-    textAlign: "right",
+    textAlign: "auto",
   },
 
-  types: { flexDirection: "row-reverse" },
+  types: { flexDirection: "row" },
   typeTile: {
     flex: 1,
     borderWidth: 1.5,
     borderColor: colors.border,
     borderRadius: radii.md,
     paddingVertical: spacing.md,
-    marginLeft: spacing.sm,
+    marginStart: spacing.sm,
     alignItems: "center",
   },
   typeTileActive: {
@@ -297,7 +298,7 @@ const createStyles = (colors) =>
     marginTop: 2,
   },
 
-  balanceRow: { flexDirection: "row", alignItems: "center" },
+  balanceRow: { flexDirection: fixedLtrRow(), alignItems: "center" },
   balanceInput: {
     flex: 1,
     backgroundColor: colors.surfaceMuted,
@@ -315,7 +316,7 @@ const createStyles = (colors) =>
     fontSize: fontSizes.subtitle,
     fontWeight: "600",
     color: colors.textMuted,
-    marginLeft: spacing.sm,
+    marginStart: spacing.sm,
   },
   balancePreview: {
     fontSize: fontSizes.meta,

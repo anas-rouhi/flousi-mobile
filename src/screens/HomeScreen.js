@@ -374,7 +374,7 @@ const createStyles = (colors) =>
   },
 
   header: {
-    flexDirection: "row-reverse",
+    flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
     paddingHorizontal: spacing.lg,
@@ -387,13 +387,13 @@ const createStyles = (colors) =>
     fontSize: fontSizes.title,
     fontWeight: "bold",
     color: colors.text,
-    textAlign: "right",
+    textAlign: "auto",
   },
   greetingSub: {
     fontSize: fontSizes.small,
     color: colors.textMuted,
     marginTop: 2,
-    textAlign: "right",
+    textAlign: "auto",
   },
   logoutButton: {
     borderWidth: 1,
@@ -402,7 +402,7 @@ const createStyles = (colors) =>
     borderRadius: radii.sm,
     paddingVertical: spacing.sm,
     paddingHorizontal: spacing.md,
-    marginRight: spacing.md,
+    marginEnd: spacing.md,
     minWidth: 96,
     alignItems: "center",
   },

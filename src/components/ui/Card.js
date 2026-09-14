@@ -42,7 +42,7 @@ const createStyles = (colors) =>
     ...shadows.card,
   },
   header: {
-    flexDirection: "row-reverse",
+    flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
     marginBottom: 14,

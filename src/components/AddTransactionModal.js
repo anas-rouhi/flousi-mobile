@@ -23,6 +23,7 @@ import {
   formatCentimes,
   sanitizeAmountInput,
 } from "../utils/money";
+import { fixedLtrRow } from "../utils/rtl";
 
 
 /** Local midnight-anchored day key, for comparing calendar days safely. */
@@ -242,7 +243,7 @@ export default function AddTransactionModal({ visible, onClose, onCreated }) {
                   value={amount}
                   onChangeText={(text) => setAmount(sanitizeAmountInput(text))}
                   placeholder="0"
-                  placeholderTextColor="#D5DBDE"
+                  placeholderTextColor={colors.textPlaceholder}
                   keyboardType="decimal-pad"
                   autoFocus
                   editable={!submitting}
@@ -505,7 +506,7 @@ const createStyles = (colors) =>
     marginTop: 10,
   },
   header: {
-    flexDirection: "row-reverse",
+    flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
     paddingVertical: 14,
@@ -514,7 +515,7 @@ const createStyles = (colors) =>
   close: { fontSize: 15, color: colors.textMuted, fontWeight: "600" },
 
   segment: {
-    flexDirection: "row-reverse",
+    flexDirection: "row",
     backgroundColor: colors.surfaceSunken,
     borderRadius: 12,
     padding: 4,
@@ -529,7 +530,8 @@ const createStyles = (colors) =>
   segmentTextActive: { color: colors.onPrimary, fontWeight: "bold" },
 
   amountRow: {
-    flexDirection: "row",
+    // Fixed order: the figure and its currency read the same either way.
+    flexDirection: fixedLtrRow(),
     alignItems: "center",
     justifyContent: "center",
     marginTop: 22,
@@ -545,7 +547,7 @@ const createStyles = (colors) =>
     fontSize: 20,
     fontWeight: "600",
     color: colors.textMuted,
-    marginLeft: 8,
+    marginStart: 8,
   },
   amountPreview: {
     fontSize: 13,
@@ -569,7 +571,7 @@ const createStyles = (colors) =>
     fontSize: 13,
     fontWeight: "600",
     color: colors.textSecondary,
-    textAlign: "right",
+    textAlign: "auto",
     marginTop: 22,
     marginBottom: 10,
   },
@@ -583,8 +585,8 @@ const createStyles = (colors) =>
   noAccountText: {
     fontSize: 13,
     lineHeight: 21,
-    color: "#5C6E64",
-    textAlign: "right",
+    color: colors.textSecondary,
+    textAlign: "auto",
     marginBottom: 12,
   },
   noAccountButton: {
@@ -598,17 +600,17 @@ const createStyles = (colors) =>
   emptyHint: {
     fontSize: 13,
     color: colors.textFaint,
-    textAlign: "right",
+    textAlign: "auto",
   },
 
-  chipRow: { flexDirection: "row-reverse", paddingLeft: 4 },
+  chipRow: { flexDirection: "row", paddingStart: 4 },
   chip: {
     borderWidth: 1.5,
     borderColor: colors.border,
     borderRadius: 12,
     paddingVertical: 10,
     paddingHorizontal: 14,
-    marginLeft: 8,
+    marginStart: 8,
     minWidth: 104,
     alignItems: "flex-end",
   },
@@ -616,21 +618,21 @@ const createStyles = (colors) =>
   chipMeta: { fontSize: 11, color: colors.textMuted, marginTop: 3 },
 
   categoryGrid: {
-    flexDirection: "row-reverse",
+    flexDirection: "row",
     flexWrap: "wrap",
   },
   categoryTile: {
-    flexDirection: "row-reverse",
+    flexDirection: "row",
     alignItems: "center",
     borderWidth: 1.5,
     borderColor: colors.border,
     borderRadius: 11,
     paddingVertical: 9,
     paddingHorizontal: 12,
-    marginLeft: 8,
+    marginStart: 8,
     marginBottom: 8,
   },
-  categoryDot: { width: 9, height: 9, borderRadius: 5, marginLeft: 7 },
+  categoryDot: { width: 9, height: 9, borderRadius: 5, marginStart: 7 },
   categoryName: { fontSize: 13, color: colors.text, maxWidth: 130 },
 
   input: {
@@ -642,11 +644,11 @@ const createStyles = (colors) =>
     paddingVertical: 13,
     fontSize: 15,
     color: colors.text,
-    textAlign: "right",
+    textAlign: "auto",
   },
 
   dateRow: {
-    flexDirection: "row-reverse",
+    flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
   },
@@ -661,7 +663,7 @@ const createStyles = (colors) =>
   datePickText: { fontSize: 14, fontWeight: "600", color: colors.textSecondary },
   datePickTextActive: { color: colors.primary },
   stepper: {
-    flexDirection: "row-reverse",
+    flexDirection: "row",
     alignItems: "center",
     backgroundColor: colors.surfaceMuted,
     borderRadius: 11,

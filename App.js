@@ -1,5 +1,11 @@
 import React from "react";
-import { View, ActivityIndicator, StyleSheet } from "react-native";
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  ActivityIndicator,
+  StyleSheet,
+} from "react-native";
 import { StatusBar } from "expo-status-bar";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import {
@@ -10,6 +16,7 @@ import {
 import { NavigationContainer } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { AuthProvider, useAuth } from "./src/context/AuthContext";
+import { LocaleProvider, useLocale } from "./src/context/LocaleContext";
 import TabNavigator from "./src/navigation/TabNavigator";
 import LoginScreen from "./src/screens/LoginScreen";
 import OnboardingScreen from "./src/screens/OnboardingScreen";
@@ -74,12 +81,60 @@ function RootNavigator() {
 }
 
 /**
- * Everything that depends on the theme sits inside ThemeProvider: the status
- * bar icons, the navigation container's own background (which paints during
- * screen transitions), and every screen.
+ * Blocks the app when the running process is laid out the wrong way round.
+ *
+ * React Native builds its native views with one layout direction and keeps it
+ * for the life of the process, so a language whose direction differs from the
+ * live one cannot simply re-render — the tree has to be rebuilt. Rather than
+ * show a mirrored-wrong UI, this asks, explicitly, for the restart.
  */
+function RestartGate() {
+  const { colors, isDark } = useTheme();
+  const { wantsRTL, restart } = useLocale();
+  const styles = useThemedStyles(createStyles);
+
+  return (
+    <View style={styles.center}>
+      <StatusBar style={isDark ? "light" : "dark"} />
+      <Text style={styles.gateTitle}>
+        {wantsRTL ? "خاص إعادة تشغيل" : "Restart required"}
+      </Text>
+      <Text style={styles.gateBody}>
+        {wantsRTL
+          ? "اتجاه الشاشة تبدل. عاود شغّل التطبيق باش يتطبق."
+          : "The layout direction changed. Restart the app to apply it."}
+      </Text>
+      <TouchableOpacity
+        style={styles.gateButton}
+        onPress={restart}
+        activeOpacity={0.85}
+      >
+        <Text style={[styles.gateButtonText, { color: colors.onPrimary }]}>
+          {wantsRTL ? "عاود شغّل" : "Restart"}
+        </Text>
+      </TouchableOpacity>
+    </View>
+  );
+}
+
 function ThemedApp() {
   const { colors, isDark } = useTheme();
+  const { ready, needsRestart } = useLocale();
+
+  // Nothing mounts until the persisted language has been read and its
+  // direction applied, so the navigation tree is never built against an
+  // unknown direction.
+  if (!ready) {
+    return (
+      <View style={[styles.boot, { backgroundColor: colors.background }]}>
+        <ActivityIndicator size="large" color={colors.primary} />
+      </View>
+    );
+  }
+
+  if (needsRestart) {
+    return <RestartGate />;
+  }
 
   const navigationTheme = {
     dark: isDark,
@@ -115,18 +170,48 @@ export default function App() {
   return (
     <SafeAreaProvider>
       <ThemeProvider>
-        <ThemedApp />
+        {/* Locale sits inside Theme so the restart gate can be themed. */}
+        <LocaleProvider>
+          <ThemedApp />
+        </LocaleProvider>
       </ThemeProvider>
     </SafeAreaProvider>
   );
 }
 
+/** Pre-theme sheet, used while the locale bootstrap is still running. */
+const styles = StyleSheet.create({
+  boot: { flex: 1, alignItems: "center", justifyContent: "center" },
+});
+
 const createStyles = (colors) =>
   StyleSheet.create({
-  center: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    backgroundColor: colors.surface,
-  },
-});
+    center: {
+      flex: 1,
+      justifyContent: "center",
+      alignItems: "center",
+      backgroundColor: colors.background,
+      padding: 24,
+    },
+    gateTitle: {
+      fontSize: 19,
+      fontWeight: "bold",
+      color: colors.text,
+      textAlign: "center",
+    },
+    gateBody: {
+      fontSize: 14,
+      lineHeight: 22,
+      color: colors.textSecondary,
+      textAlign: "center",
+      marginTop: 8,
+      marginBottom: 20,
+    },
+    gateButton: {
+      backgroundColor: colors.primary,
+      borderRadius: 14,
+      paddingVertical: 14,
+      paddingHorizontal: 32,
+    },
+    gateButtonText: { fontSize: 15, fontWeight: "bold" },
+  });

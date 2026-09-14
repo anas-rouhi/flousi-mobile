@@ -10,6 +10,7 @@ import { categoryGlyph } from "../../constants/categoryIcons";
 import { fontSizes, radii, spacing } from "../../constants/theme";
 import { useTheme, useThemedStyles } from "../../context/ThemeContext";
 import { formatMoney } from "../../utils/money";
+import { isRTL } from "../../utils/rtl";
 
 /** Transfers are neither a gain nor a loss, so they get their own colour. */
 function directionFor(type, colors) {
@@ -43,8 +44,10 @@ export default function TransactionListItem({
     transaction.description ? category?.name : null,
     transaction.account?.name,
     // Transfers name where the money went, which is the point of the row.
+    // U+2192 is not auto-mirrored by bidi, so the glyph is chosen by direction
+    // rather than flipped in a transform (it sits inside a joined string).
     transaction.destination_account?.name
-      ? `→ ${transaction.destination_account.name}`
+      ? `${isRTL() ? "←" : "→"} ${transaction.destination_account.name}`
       : null,
   ]
     .filter(Boolean)
@@ -92,7 +95,7 @@ export default function TransactionListItem({
 const createStyles = (colors) =>
   StyleSheet.create({
   row: {
-    flexDirection: "row-reverse",
+    flexDirection: "row",
     alignItems: "center",
     paddingVertical: spacing.md,
     borderBottomWidth: StyleSheet.hairlineWidth,
@@ -106,7 +109,7 @@ const createStyles = (colors) =>
     borderRadius: radii.md,
     alignItems: "center",
     justifyContent: "center",
-    marginLeft: spacing.md,
+    marginStart: spacing.md,
   },
   glyph: { fontSize: 18 },
 
@@ -115,17 +118,17 @@ const createStyles = (colors) =>
     fontSize: fontSizes.bodyLarge,
     fontWeight: "600",
     color: colors.text,
-    textAlign: "right",
+    textAlign: "auto",
   },
   meta: {
     fontSize: fontSizes.small,
     color: colors.textMuted,
     marginTop: 3,
-    textAlign: "right",
+    textAlign: "auto",
   },
   amount: {
     fontSize: fontSizes.bodyLarge,
     fontWeight: "bold",
-    marginRight: spacing.sm,
+    marginEnd: spacing.sm,
   },
 });

@@ -19,6 +19,7 @@ import {
   formatCentimes,
   sanitizeAmountInput,
 } from "../../utils/money";
+import { fixedLtrRow } from "../../utils/rtl";
 
 /**
  * Common monthly ceilings, in centimes so no conversion happens at tap time.
@@ -198,7 +199,7 @@ const createStyles = (colors) =>
     marginTop: 10,
   },
   header: {
-    flexDirection: "row-reverse",
+    flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
     paddingVertical: 14,
@@ -217,11 +218,12 @@ const createStyles = (colors) =>
   caption: {
     fontSize: fontSizes.meta,
     color: colors.textSecondary,
-    textAlign: "right",
+    textAlign: "auto",
   },
 
   amountRow: {
-    flexDirection: "row",
+    // Fixed order: the figure and its currency read the same either way.
+    flexDirection: fixedLtrRow(),
     alignItems: "center",
     justifyContent: "center",
     marginTop: spacing.lg,
@@ -238,25 +240,25 @@ const createStyles = (colors) =>
     fontSize: fontSizes.title,
     fontWeight: "600",
     color: colors.textMuted,
-    marginLeft: spacing.sm,
+    marginStart: spacing.sm,
   },
 
   label: {
     fontSize: fontSizes.meta,
     fontWeight: "600",
     color: colors.textSecondary,
-    textAlign: "right",
+    textAlign: "auto",
     marginTop: spacing.xxl,
     marginBottom: spacing.sm,
   },
-  presets: { flexDirection: "row-reverse", flexWrap: "wrap" },
+  presets: { flexDirection: "row", flexWrap: "wrap" },
   preset: {
     borderWidth: 1.5,
     borderColor: colors.border,
     borderRadius: radii.md,
     paddingVertical: spacing.sm,
     paddingHorizontal: 14,
-    marginLeft: spacing.sm,
+    marginStart: spacing.sm,
     marginBottom: spacing.sm,
   },
   presetActive: {

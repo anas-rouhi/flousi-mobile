@@ -104,23 +104,23 @@ export default function AccountsCarousel({
 
 const createStyles = (colors) =>
   StyleSheet.create({
-  row: { flexDirection: "row-reverse", paddingLeft: spacing.xs },
+  row: { flexDirection: "row", paddingStart: spacing.xs },
 
   tile: {
     borderWidth: 1.5,
     borderColor: colors.border,
     borderRadius: radii.lg,
     padding: 14,
-    marginLeft: spacing.sm,
+    marginStart: spacing.sm,
     minWidth: 148,
     alignItems: "flex-end",
   },
   tileTop: {
-    flexDirection: "row-reverse",
+    flexDirection: "row",
     alignItems: "center",
     marginBottom: spacing.sm,
   },
-  dot: { width: 8, height: 8, borderRadius: 4, marginLeft: 6 },
+  dot: { width: 8, height: 8, borderRadius: 4, marginStart: 6 },
   tileType: {
     fontSize: fontSizes.caption,
     fontWeight: "600",
@@ -131,14 +131,14 @@ const createStyles = (colors) =>
     fontSize: fontSizes.body,
     fontWeight: "600",
     color: colors.text,
-    textAlign: "right",
+    textAlign: "auto",
   },
   tileBalance: {
     fontSize: fontSizes.bodyLarge,
     fontWeight: "bold",
     color: colors.primary,
     marginTop: spacing.xs,
-    textAlign: "right",
+    textAlign: "auto",
   },
 
   addTile: {
@@ -148,7 +148,7 @@ const createStyles = (colors) =>
     borderRadius: radii.lg,
     paddingVertical: 14,
     paddingHorizontal: spacing.xl,
-    marginLeft: spacing.sm,
+    marginStart: spacing.sm,
     minWidth: 110,
     alignItems: "center",
     justifyContent: "center",

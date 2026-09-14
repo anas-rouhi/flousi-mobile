@@ -101,7 +101,7 @@ function LegendDot({ color, label }) {
 const createStyles = (colors) =>
   StyleSheet.create({
   track: {
-    flexDirection: "row-reverse",
+    flexDirection: "row",
     height: 10,
     borderRadius: 5,
     backgroundColor: colors.track,
@@ -110,21 +110,21 @@ const createStyles = (colors) =>
   segment: { height: "100%" },
 
   legend: {
-    flexDirection: "row-reverse",
+    flexDirection: "row",
     marginTop: spacing.md,
     gap: spacing.lg,
   },
-  legendItem: { flexDirection: "row-reverse", alignItems: "center" },
+  legendItem: { flexDirection: "row", alignItems: "center" },
   legendSwatch: {
     width: 8,
     height: 8,
     borderRadius: radii.pill,
-    marginLeft: 6,
+    marginStart: 6,
   },
   legendLabel: { fontSize: fontSizes.small, color: colors.textSecondary },
 
   netRow: {
-    flexDirection: "row-reverse",
+    flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
     borderTopWidth: StyleSheet.hairlineWidth,
@@ -139,12 +139,12 @@ const createStyles = (colors) =>
     fontSize: fontSizes.meta,
     color: colors.primary,
     marginTop: spacing.sm,
-    textAlign: "right",
+    textAlign: "auto",
   },
   savingsMuted: {
     fontSize: fontSizes.meta,
     color: colors.textMuted,
     marginTop: spacing.sm,
-    textAlign: "right",
+    textAlign: "auto",
   },
 });

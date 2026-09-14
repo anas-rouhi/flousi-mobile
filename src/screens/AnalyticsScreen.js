@@ -10,6 +10,7 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import CashflowCard from "../components/analytics/CashflowCard";
+import DirectionalIcon from "../components/ui/DirectionalIcon";
 import CategoryDistribution from "../components/analytics/CategoryDistribution";
 import { fontSizes, radii, spacing } from "../constants/theme";
 import { useTheme, useThemedStyles } from "../context/ThemeContext";
@@ -86,7 +87,7 @@ export default function AnalyticsScreen() {
         accessibilityRole="button"
         accessibilityLabel="الشهر اللي قبل"
       >
-        <Text style={styles.arrowText}>›</Text>
+        <DirectionalIcon glyph="›" style={styles.arrowText} />
       </TouchableOpacity>
 
       <Text style={styles.monthLabel}>
@@ -101,7 +102,7 @@ export default function AnalyticsScreen() {
         accessibilityRole="button"
         accessibilityLabel="الشهر اللي بعد"
       >
-        <Text style={styles.arrowText}>‹</Text>
+        <DirectionalIcon glyph="‹" style={styles.arrowText} />
       </TouchableOpacity>
     </View>
   );
@@ -229,11 +230,11 @@ const createStyles = (colors) =>
     fontSize: fontSizes.heading,
     fontWeight: "bold",
     color: colors.text,
-    textAlign: "right",
+    textAlign: "auto",
   },
 
   switcher: {
-    flexDirection: "row-reverse",
+    flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
     backgroundColor: colors.surface,
@@ -290,16 +291,16 @@ const createStyles = (colors) =>
     fontSize: fontSizes.subtitle,
     fontWeight: "bold",
     color: colors.text,
-    textAlign: "right",
+    textAlign: "auto",
   },
   trendMeta: {
     fontSize: fontSizes.small,
     color: colors.textMuted,
-    textAlign: "right",
+    textAlign: "auto",
     marginTop: 2,
   },
   bars: {
-    flexDirection: "row-reverse",
+    flexDirection: "row",
     alignItems: "flex-end",
     height: 90,
   },
@@ -311,7 +312,7 @@ const createStyles = (colors) =>
   },
   bar: { width: "100%", borderRadius: 1.5, minHeight: 0 },
   axis: {
-    flexDirection: "row-reverse",
+    flexDirection: "row",
     justifyContent: "space-between",
     marginTop: 6,
   },

@@ -139,13 +139,13 @@ const createStyles = (colors) =>
     fontSize: fontSizes.small,
     fontWeight: "700",
     color: colors.textMuted,
-    textAlign: "right",
+    textAlign: "auto",
     letterSpacing: 0.2,
     marginBottom: 6,
   },
 
   row: {
-    flexDirection: "row-reverse",
+    flexDirection: "row",
     alignItems: "center",
     paddingVertical: spacing.md,
     borderBottomWidth: StyleSheet.hairlineWidth,
@@ -159,7 +159,7 @@ const createStyles = (colors) =>
     borderRadius: radii.md,
     alignItems: "center",
     justifyContent: "center",
-    marginLeft: spacing.md,
+    marginStart: spacing.md,
   },
   glyph: { fontSize: 18 },
 
@@ -168,18 +168,18 @@ const createStyles = (colors) =>
     fontSize: fontSizes.bodyLarge,
     fontWeight: "600",
     color: colors.text,
-    textAlign: "right",
+    textAlign: "auto",
   },
   meta: {
     fontSize: fontSizes.small,
     color: colors.textMuted,
     marginTop: 3,
-    textAlign: "right",
+    textAlign: "auto",
   },
   amount: {
     fontSize: fontSizes.bodyLarge,
     fontWeight: "bold",
-    marginRight: spacing.sm,
+    marginEnd: spacing.sm,
   },
 
   empty: { alignItems: "center", paddingVertical: spacing.xl },

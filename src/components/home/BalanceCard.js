@@ -79,24 +79,24 @@ const createStyles = (colors) =>
   label: {
     color: colors.onPrimaryMuted,
     fontSize: fontSizes.body,
-    textAlign: "right",
+    textAlign: "auto",
   },
   value: {
     color: colors.onPrimary,
     fontSize: fontSizes.display,
     fontWeight: "bold",
     marginTop: spacing.sm,
-    textAlign: "right",
+    textAlign: "auto",
   },
   meta: {
     color: colors.onPrimaryFaint,
     fontSize: fontSizes.small,
     marginTop: 6,
-    textAlign: "right",
+    textAlign: "auto",
   },
 
   flows: {
-    flexDirection: "row-reverse",
+    flexDirection: "row",
     alignItems: "center",
     borderTopWidth: StyleSheet.hairlineWidth,
     borderTopColor: colors.onPrimaryDivider,
@@ -128,10 +128,10 @@ const createStyles = (colors) =>
     color: colors.onPrimaryMuted,
     fontSize: fontSizes.small,
     marginBottom: 6,
-    textAlign: "right",
+    textAlign: "auto",
   },
   otherCurrencyRow: {
-    flexDirection: "row-reverse",
+    flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
     marginTop: spacing.xs,

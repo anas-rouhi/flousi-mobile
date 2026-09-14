@@ -204,7 +204,7 @@ const createStyles = (colors) =>
   editIcon: { fontSize: 16 },
 
   amountRow: {
-    flexDirection: "row-reverse",
+    flexDirection: "row",
     alignItems: "baseline",
     marginBottom: spacing.md,
   },
@@ -216,12 +216,12 @@ const createStyles = (colors) =>
     borderRadius: 6,
     backgroundColor: colors.track,
     overflow: "hidden",
-    flexDirection: "row-reverse",
+    flexDirection: "row",
   },
   fill: { height: "100%", borderRadius: 6 },
 
   footer: {
-    flexDirection: "row-reverse",
+    flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
     marginTop: spacing.sm,

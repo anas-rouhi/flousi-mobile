@@ -177,7 +177,7 @@ const createStyles = (colors) =>
 
   features: { paddingHorizontal: 20 },
   featureCard: {
-    flexDirection: "row-reverse",
+    flexDirection: "row",
     backgroundColor: colors.surfaceMuted,
     borderRadius: 16,
     padding: 16,
@@ -189,7 +189,7 @@ const createStyles = (colors) =>
     borderRadius: 22,
     alignItems: "center",
     justifyContent: "center",
-    marginLeft: 14,
+    marginStart: 14,
   },
   glyph: { fontSize: 22 },
   featureBody: { flex: 1 },
@@ -197,20 +197,20 @@ const createStyles = (colors) =>
     fontSize: 16,
     fontWeight: "bold",
     color: colors.text,
-    textAlign: "right",
+    textAlign: "auto",
   },
   featureSubtitle: {
     fontSize: 12,
     fontWeight: "600",
     marginTop: 3,
-    textAlign: "right",
+    textAlign: "auto",
   },
   featureText: {
     fontSize: 13,
     lineHeight: 21,
     color: colors.textSecondary,
     marginTop: 7,
-    textAlign: "right",
+    textAlign: "auto",
   },
 
   footnote: {

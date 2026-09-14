@@ -1,3 +1,5 @@
+import { ltr } from "./bidi";
+
 /**
  * Money arrives from the API as integer centimes plus display-ready strings.
  * The API's `amount_formatted` is always preferred; these helpers only exist as
@@ -28,9 +30,18 @@ function splitCentimes(centimes) {
 }
 
 /** 1234500 => "12 345,00 DH" — mirrors the backend's Money::format(). */
-export function formatCentimes(centimes, currency = "MAD") {
+function rawCentimes(centimes, currency = "MAD") {
   const { negative, units, cents } = splitCentimes(centimes);
   return `${negative ? "-" : ""}${units},${cents} ${currencySymbol(currency)}`;
+}
+
+/**
+ * Display form. The result is wrapped in a left-to-right isolate so an amount
+ * keeps its own reading order inside an Arabic paragraph — without it, bidi
+ * reorders "5 000,00 DH" around the Latin currency symbol.
+ */
+export function formatCentimes(centimes, currency = "MAD") {
+  return ltr(rawCentimes(centimes, currency));
 }
 
 /**
@@ -38,23 +49,29 @@ export function formatCentimes(centimes, currency = "MAD") {
  * amount_formatted }). Falls back to local formatting of the authoritative
  * integer if the formatted string is missing.
  */
-export function formatMoney(money, currency = "MAD") {
+/** Unisolated, so callers can still inspect the sign before display. */
+function rawMoney(money, currency = "MAD") {
   if (!money) {
-    return formatCentimes(0, currency);
+    return rawCentimes(0, currency);
   }
   if (typeof money.amount_formatted === "string" && money.amount_formatted) {
     return money.amount_formatted;
   }
-  return formatCentimes(money.amount, currency);
+  return rawCentimes(money.amount, currency);
+}
+
+export function formatMoney(money, currency = "MAD") {
+  return ltr(rawMoney(money, currency));
 }
 
 /** Same as formatMoney, but forces an explicit +/- prefix for flow amounts. */
 export function formatSignedMoney(money, currency = "MAD", sign = "+") {
-  const formatted = formatMoney(money, currency);
-  if (formatted.startsWith("-") || formatted.startsWith("+")) {
-    return formatted;
-  }
-  return `${sign}${formatted}`;
+  // The sign is decided on the raw string: an isolate would sit in front of it
+  // and defeat the startsWith checks, producing "+-15,50 DH".
+  const raw = rawMoney(money, currency);
+  const signed =
+    raw.startsWith("-") || raw.startsWith("+") ? raw : `${sign}${raw}`;
+  return ltr(signed);
 }
 
 /**

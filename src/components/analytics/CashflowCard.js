@@ -80,7 +80,7 @@ function Figure({ label, value, color, align = "flex-start" }) {
 
 const createStyles = (colors) =>
   StyleSheet.create({
-  row: { flexDirection: "row-reverse", alignItems: "center" },
+  row: { flexDirection: "row", alignItems: "center" },
   figure: { flex: 1 },
   divider: {
     width: StyleSheet.hairlineWidth,
@@ -96,7 +96,7 @@ const createStyles = (colors) =>
   },
 
   netRow: {
-    flexDirection: "row-reverse",
+    flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
     borderTopWidth: StyleSheet.hairlineWidth,
@@ -105,20 +105,20 @@ const createStyles = (colors) =>
     paddingTop: spacing.md,
   },
   netLabel: { fontSize: fontSizes.body, color: colors.textSecondary },
-  netValueWrap: { flexDirection: "row-reverse", alignItems: "center" },
+  netValueWrap: { flexDirection: "row", alignItems: "center" },
   netValue: { fontSize: fontSizes.subtitle, fontWeight: "bold" },
   ratePill: {
     borderRadius: radii.pill,
     paddingVertical: 3,
     paddingHorizontal: spacing.sm,
-    marginRight: spacing.sm,
+    marginEnd: spacing.sm,
   },
   rateText: { fontSize: fontSizes.caption, fontWeight: "bold" },
 
   muted: {
     fontSize: fontSizes.meta,
     color: colors.textMuted,
-    textAlign: "right",
+    textAlign: "auto",
     marginTop: spacing.sm,
   },
 });

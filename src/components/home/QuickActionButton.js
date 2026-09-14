@@ -32,7 +32,7 @@ const createStyles = (colors) =>
   fab: {
     position: "absolute",
     bottom: 28,
-    right: 20,
+    end: 20,
     width: 60,
     height: 60,
     borderRadius: 30,

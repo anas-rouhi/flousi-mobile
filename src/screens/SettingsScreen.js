@@ -13,6 +13,7 @@ import { Card, CardHeader } from "../components/ui/Card";
 import { fontSizes, radii, spacing } from "../constants/theme";
 import { useTheme, useThemedStyles } from "../context/ThemeContext";
 import { useAuth } from "../context/AuthContext";
+import { useLocale } from "../context/LocaleContext";
 
 /** System / Light / Dark, in the order people expect to scan them. */
 const THEME_OPTIONS = [
@@ -35,6 +36,7 @@ export default function SettingsScreen() {
   const { colors, mode, scheme, setMode } = useTheme();
   const styles = useThemedStyles(createStyles);
   const { user, signOut } = useAuth();
+  const { language, languages, setLanguage, restart } = useLocale();
   const [signingOut, setSigningOut] = useState(false);
 
   const notAvailable = useCallback((what) => {
@@ -65,6 +67,39 @@ export default function SettingsScreen() {
     ]);
   }, [signOut]);
 
+  /**
+   * React Native latches layout direction at startup, so a language change
+   * cannot flip the screen live. The restart is therefore asked for, never
+   * performed behind the user back.
+   */
+  const chooseLanguage = useCallback(
+    async (option) => {
+      const result = await setLanguage(option.value);
+      if (!result.changed || !result.needsRestart) {
+        return;
+      }
+      Alert.alert(
+        "تبديل اللغة",
+        `باش تبان ${option.label} بالاتجاه الصحيح، خاص التطبيق يتعاود يتشغل. تعاود دابا؟`,
+        [
+          { text: "من بعد", style: "cancel" },
+          {
+            text: "عاود شغّل",
+            onPress: () => {
+              if (!restart()) {
+                Alert.alert(
+                  "عاود شغّل التطبيق",
+                  "سد التطبيق وحلو من جديد باش يتطبق الاتجاه الجديد.",
+                );
+              }
+            },
+          },
+        ],
+      );
+    },
+    [setLanguage, restart],
+  );
+
   const initial = user?.name?.trim()?.[0]?.toUpperCase() || "؟";
 
   return (
@@ -94,12 +129,33 @@ export default function SettingsScreen() {
         {/* Preferences — values are live, editing is not */}
         <Card>
           <CardHeader title="التفضيلات" />
-          <Row
-            label="اللغة"
-            value={LANGUAGE_NAMES[user?.preferred_language] || user?.preferred_language || "—"}
-            hint="التبديل كيتطلب endpoint فـ السيرفر"
-            onPress={() => notAvailable("تبديل اللغة")}
-          />
+          <View style={styles.languages}>
+            {languages.map((option) => {
+              const active = option.value === language;
+              return (
+                <TouchableOpacity
+                  key={option.value}
+                  style={[styles.mode, active && styles.modeActive]}
+                  onPress={() => chooseLanguage(option)}
+                  activeOpacity={0.8}
+                  accessibilityRole="button"
+                  accessibilityState={{ selected: active }}
+                >
+                  <Text
+                    style={[styles.modeLabel, active && styles.modeLabelActive]}
+                  >
+                    {option.label}
+                  </Text>
+                  <Text style={styles.modeGlyphSmall}>
+                    {option.rtl ? "RTL" : "LTR"}
+                  </Text>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+          <Text style={styles.modeHint}>
+            تبديل اللغة كيتطلب إعادة تشغيل التطبيق باش يتبدل اتجاه الشاشة.
+          </Text>
           <Row label="العملة" value={user?.preferred_currency || "—"} readOnly />
           <Row
             label="المنطقة الزمنية"
@@ -205,10 +261,10 @@ const createStyles = (colors) =>
     fontSize: fontSizes.heading,
     fontWeight: "bold",
     color: colors.text,
-    textAlign: "right",
+    textAlign: "auto",
   },
 
-  profile: { flexDirection: "row-reverse", alignItems: "center" },
+  profile: { flexDirection: "row", alignItems: "center" },
   avatar: {
     width: 52,
     height: 52,
@@ -216,7 +272,7 @@ const createStyles = (colors) =>
     backgroundColor: colors.primary,
     alignItems: "center",
     justifyContent: "center",
-    marginLeft: spacing.md,
+    marginStart: spacing.md,
   },
   avatarText: {
     color: colors.onPrimary,
@@ -228,17 +284,17 @@ const createStyles = (colors) =>
     fontSize: fontSizes.subtitle,
     fontWeight: "bold",
     color: colors.text,
-    textAlign: "right",
+    textAlign: "auto",
   },
   email: {
     fontSize: fontSizes.meta,
     color: colors.textMuted,
-    textAlign: "right",
+    textAlign: "auto",
     marginTop: 2,
   },
 
   row: {
-    flexDirection: "row-reverse",
+    flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
     paddingVertical: spacing.md,
@@ -250,19 +306,19 @@ const createStyles = (colors) =>
   rowLabel: {
     fontSize: fontSizes.body,
     color: colors.text,
-    textAlign: "right",
+    textAlign: "auto",
   },
   rowHint: {
     fontSize: fontSizes.caption,
     color: colors.textFaint,
-    textAlign: "right",
+    textAlign: "auto",
     marginTop: 2,
   },
   rowValue: {
     fontSize: fontSizes.meta,
     color: colors.textSecondary,
     fontWeight: "600",
-    marginRight: spacing.md,
+    marginEnd: spacing.md,
   },
 
   action: {
@@ -289,12 +345,13 @@ const createStyles = (colors) =>
     color: colors.textMuted,
   },
 
-  modes: { flexDirection: "row-reverse" },
+  modes: { flexDirection: "row" },
+  languages: { flexDirection: "row" },
   mode: {
     flex: 1,
     alignItems: "center",
     paddingVertical: spacing.md,
-    marginLeft: spacing.sm,
+    marginStart: spacing.sm,
     borderRadius: radii.md,
     borderWidth: 1.5,
     borderColor: colors.border,
@@ -304,6 +361,12 @@ const createStyles = (colors) =>
     backgroundColor: colors.primarySoft,
   },
   modeGlyph: { fontSize: 18, marginBottom: 4 },
+  modeGlyphSmall: {
+    fontSize: fontSizes.caption,
+    color: colors.textFaint,
+    marginTop: 2,
+    letterSpacing: 0.5,
+  },
   modeLabel: {
     fontSize: fontSizes.meta,
     fontWeight: "600",
@@ -313,7 +376,7 @@ const createStyles = (colors) =>
   modeHint: {
     fontSize: fontSizes.caption,
     color: colors.textMuted,
-    textAlign: "right",
+    textAlign: "auto",
     marginTop: spacing.sm,
   },
 
