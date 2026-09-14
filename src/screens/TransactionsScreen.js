@@ -40,6 +40,7 @@ export default function TransactionsScreen() {
     clearSearch,
     activeTerm,
     isSearching,
+    pending,
     total,
     loading,
     refreshing,
@@ -188,7 +189,9 @@ export default function TransactionsScreen() {
           </View>
         )}
         ListEmptyComponent={
-          loading ? (
+          // `pending` covers the gap between a keystroke and its response, so
+          // an in-flight search never renders as "nothing found".
+          pending ? (
             <ActivityIndicator
               color={colors.primary}
               size="large"
@@ -197,12 +200,12 @@ export default function TransactionsScreen() {
           ) : (
             <View style={styles.empty}>
               <Text style={styles.emptyTitle}>
-                {isSearching
+                {activeTerm
                   ? `ما لقيناش نتائج لـ «${activeTerm}»`
                   : "ما كاينة حتى معاملة"}
               </Text>
               <Text style={styles.emptySubtitle}>
-                {isSearching
+                {activeTerm
                   ? "البحث كيقلب فـ الوصف فقط"
                   : "زيد أول معاملة بالزر لتحت"}
               </Text>

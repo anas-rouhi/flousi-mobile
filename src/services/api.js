@@ -1,4 +1,5 @@
 import axios from "axios";
+import { NativeModules } from "react-native";
 import * as SecureStore from "expo-secure-store";
 import { emitUnauthorized } from "./sessionEvents";
 
@@ -13,13 +14,45 @@ import { emitUnauthorized } from "./sessionEvents";
  * The value may be either a bare host ("http://10.0.0.5:8000") or a full API
  * root ("http://10.0.0.5:8000/api/v1"); both resolve to the same baseURL.
  */
-const DEFAULT_HOST = "http://192.168.3.220:8000";
 const API_PREFIX = "/api/v1";
+const API_PORT = 8000;
+
+/**
+ * Last resort only. A hardcoded LAN address goes stale the moment the machine
+ * joins another network — that is exactly what broke this app twice — so it
+ * points at the loopback, which is right for simulators and web and obviously
+ * wrong (rather than silently wrong) on a phone.
+ */
+const FALLBACK_HOST = `http://localhost:${API_PORT}`;
+
+/**
+ * The machine serving the JS bundle, taken from Metro's own script URL
+ * ("http://192.168.110.135:8081/index.bundle?..."). In development the device
+ * is by definition able to reach that address, so the API host tracks the LAN
+ * IP automatically instead of needing an edit whenever the network changes.
+ *
+ * Empty in a production build, where EXPO_PUBLIC_API_URL is the real source.
+ */
+function metroHost() {
+  const scriptURL = NativeModules?.SourceCode?.scriptURL;
+  if (typeof scriptURL !== "string") {
+    return null;
+  }
+  const match = /^https?:\/\/([^/:]+)/.exec(scriptURL);
+  return match ? match[1] : null;
+}
 
 function resolveBaseUrl() {
-  const configured = process.env.EXPO_PUBLIC_API_URL;
-  const host = (configured || DEFAULT_HOST).trim().replace(/\/+$/, "");
+  // Explicit configuration always wins.
+  const configured = process.env.EXPO_PUBLIC_API_URL?.trim();
 
+  const derived = configured
+    ? configured
+    : metroHost()
+      ? `http://${metroHost()}:${API_PORT}`
+      : FALLBACK_HOST;
+
+  const host = derived.replace(/\/+$/, "");
   return host.endsWith(API_PREFIX) ? host : `${host}${API_PREFIX}`;
 }
 
