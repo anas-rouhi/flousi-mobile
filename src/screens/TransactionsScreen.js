@@ -21,6 +21,10 @@ import { useTransactions } from "../hooks/useTransactions";
 import { useI18n } from "../i18n";
 import { isolate, joinMeta } from "../utils/bidi";
 import { categoryName } from "../utils/categories";
+import {
+  destructiveFeedback,
+  successFeedback,
+} from "../utils/haptics";
 import { formatTransactionDate, zonedDayKey } from "../utils/date";
 import { formatMoney } from "../utils/money";
 
@@ -101,8 +105,13 @@ export default function TransactionsScreen() {
             text: t("common.delete"),
             style: "destructive",
             onPress: async () => {
+              // On the commit, not the prompt: the buzz confirms the record is
+              // actually being destroyed.
+              destructiveFeedback();
               const ok = await remove(transaction.id);
-              if (!ok) {
+              if (ok) {
+                successFeedback();
+              } else {
                 Alert.alert(
                   t("common.error_title"),
                   t("transactions.delete_failed"),
@@ -252,7 +261,10 @@ export default function TransactionsScreen() {
       <AddTransactionModal
         visible={addVisible}
         onClose={() => setAddVisible(false)}
-        onCreated={refresh}
+        onCreated={() => {
+          successFeedback();
+          refresh();
+        }}
       />
     </SafeAreaView>
   );

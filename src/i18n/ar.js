@@ -223,6 +223,16 @@ export default {
       savings_rate: "نسبة التوفير: {rate}",
       no_income: "ما كاينش مدخول هذا الشهر",
     },
+    insight: {
+      top_category:
+        "💡 تحليل ذكي: أكثر فئة صرفتي فيها هاد الشهر هي {category} بنسبة {share}.",
+      budget_warning:
+        "⚠️ انتبه: استهلكتي {percent} من ميزانية هاد الشهر وباقي {days}.",
+      budget_over: "⚠️ فتيتي الميزانية ديال هاد الشهر بـ {amount}.",
+      savings: "🏆 تبارك الله: راك موفر {rate} من مدخولك هاد الشهر!",
+      days_left_one: "نهار واحد",
+      days_left_other: "{count} أيام",
+    },
     recent_transactions: "آخر المعاملات",
     no_transactions: "ما كاينة حتى معاملة",
     no_transactions_hint: "زيد أول معاملة باش تبان هنا",

@@ -60,6 +60,9 @@ export default function TransactionListItem({
   // The sign goes inside the amount's LTR isolate. Rendered as a sibling in
   // front of it, an RTL line put the minus after the currency: "15,50 DH-".
   const amount = formatSignedMoney(transaction, transaction.currency, sign);
+  // Pins each text run to the active direction, so a title that mixes Arabic
+  // and Latin cannot start laying itself out against the amount.
+  const writingDirection = isRTL() ? "rtl" : "ltr";
 
   return (
     <TouchableOpacity
@@ -82,17 +85,30 @@ export default function TransactionListItem({
       </View>
 
       <View style={styles.body}>
-        <Text style={styles.title} numberOfLines={1}>
+        <Text
+          style={[styles.title, { writingDirection }]}
+          numberOfLines={1}
+          ellipsizeMode="tail"
+        >
           {title}
         </Text>
         {meta ? (
-          <Text style={styles.meta} numberOfLines={1}>
+          <Text
+            style={[styles.meta, { writingDirection }]}
+            numberOfLines={1}
+            ellipsizeMode="tail"
+          >
             {meta}
           </Text>
         ) : null}
       </View>
 
-      <Text style={[styles.amount, { color }]}>{amount}</Text>
+      <Text
+        style={[styles.amount, { color, writingDirection }]}
+        numberOfLines={1}
+      >
+        {amount}
+      </Text>
     </TouchableOpacity>
   );
 }
@@ -108,17 +124,24 @@ const createStyles = (colors) =>
   },
   rowLast: { borderBottomWidth: 0 },
 
+  // Fixed square: never shrinks, never grows, so the text column is the only
+  // flexible part of the row.
   glyphWrap: {
     width: 38,
     height: 38,
+    flexShrink: 0,
     borderRadius: radii.md,
     alignItems: "center",
     justifyContent: "center",
-    marginStart: spacing.md,
   },
   glyph: { fontSize: 18 },
 
-  body: { flex: 1 },
+  /**
+   * The gap lives here, not as a margin on the icon: `marginStart` on the icon
+   * put the space on the row's outer edge and left title and amount touching,
+   * which is what collided Arabic titles into the figure ("499m00dhTa3lim").
+   */
+  body: { flex: 1, minWidth: 0, marginHorizontal: spacing.md },
   title: {
     fontSize: fontSizes.bodyLarge,
     fontWeight: "600",
@@ -131,9 +154,13 @@ const createStyles = (colors) =>
     marginTop: 3,
     textAlign: "auto",
   },
+  // Takes exactly the width it needs and keeps it: the title ellipsises first.
+  // `auto` resolves against the run's own direction, which the LTR isolate
+  // around the figure already fixes ("end" is web-only in React Native).
   amount: {
     fontSize: fontSizes.bodyLarge,
     fontWeight: "bold",
-    marginEnd: spacing.sm,
+    flexShrink: 0,
+    textAlign: "auto",
   },
 });

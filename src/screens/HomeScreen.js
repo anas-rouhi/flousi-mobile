@@ -21,6 +21,8 @@ import CategoryBreakdownCard from "../components/home/CategoryBreakdownCard";
 import MonthFlowCard from "../components/home/MonthFlowCard";
 import QuickActionButton from "../components/home/QuickActionButton";
 import RecentTransactionsList from "../components/home/RecentTransactionsList";
+import SmartInsightCard from "../components/home/SmartInsightCard";
+import { DashboardSkeleton } from "../components/ui/Skeleton";
 import { fontSizes, radii, spacing } from "../constants/theme";
 import { useTheme, useThemedStyles } from "../context/ThemeContext";
 import { useAuth } from "../context/AuthContext";
@@ -31,6 +33,7 @@ import { primeCategoryCatalog } from "../services/categories";
 import { fetchDashboardStats } from "../services/stats";
 import { useI18n } from "../i18n";
 import { isolate } from "../utils/bidi";
+import { successFeedback } from "../utils/haptics";
 import { centimesOf } from "../utils/money";
 
 /** "Anas Rouhi" => "Anas" — the greeting stays short on narrow screens. */
@@ -158,6 +161,7 @@ export default function HomeScreen() {
    */
   const handleTransactionCreated = useCallback(
     (created) => {
+      successFeedback();
       showToast(
         created?.type === "income"
           ? t("home.toast_income_added")
@@ -171,6 +175,7 @@ export default function HomeScreen() {
 
   const handleAccountCreated = useCallback(
     (created) => {
+      successFeedback();
       showToast(
         t("home.toast_account_added", { name: isolate(created?.name || "") }),
       );
@@ -190,6 +195,7 @@ export default function HomeScreen() {
       const saved = await budget.save({ limitCentimes });
       if (saved) {
         setBudgetSheetVisible(false);
+        successFeedback();
         showToast(t("home.toast_budget_set"));
       }
       return saved;
@@ -254,9 +260,7 @@ export default function HomeScreen() {
     return (
       <SafeAreaView style={styles.screen} edges={["top"]}>
         {header}
-        <View style={styles.center}>
-          <ActivityIndicator size="large" color={colors.primary} />
-        </View>
+        <DashboardSkeleton />
       </SafeAreaView>
     );
   }
@@ -300,6 +304,8 @@ export default function HomeScreen() {
           month={stats?.month}
           currency={currency}
         />
+
+        <SmartInsightCard stats={stats} budget={budget} currency={currency} />
 
         <BudgetCard
           hasBudget={budget.hasBudget}

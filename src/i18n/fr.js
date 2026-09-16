@@ -226,6 +226,16 @@ export default {
       savings_rate: "Taux d'épargne : {rate}",
       no_income: "Aucun revenu ce mois-ci",
     },
+    insight: {
+      top_category:
+        "💡 Analyse : ce mois-ci, votre plus gros poste est {category}, à {share}.",
+      budget_warning:
+        "⚠️ Attention : vous avez utilisé {percent} du budget du mois, et il reste {days}.",
+      budget_over: "⚠️ Budget du mois dépassé de {amount}.",
+      savings: "🏆 Bravo : vous épargnez {rate} de vos revenus ce mois-ci !",
+      days_left_one: "1 jour",
+      days_left_other: "{count} jours",
+    },
     recent_transactions: "Dernières transactions",
     no_transactions: "Aucune transaction",
     no_transactions_hint: "Ajoutez votre première transaction pour la voir ici",

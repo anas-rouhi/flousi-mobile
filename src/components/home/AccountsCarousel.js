@@ -116,14 +116,17 @@ const createStyles = (colors) =>
     padding: 14,
     marginStart: spacing.sm,
     minWidth: 148,
-    alignItems: "flex-end",
+    // Direction-relative: right-aligned in Arabic, left in French/English.
+    // `flex-end` here used to pin every tile's text to the right in both.
+    alignItems: "flex-start",
   },
   tileTop: {
     flexDirection: "row",
     alignItems: "center",
+    gap: 6,
     marginBottom: spacing.sm,
   },
-  dot: { width: 8, height: 8, borderRadius: 4, marginStart: 6 },
+  dot: { width: 8, height: 8, borderRadius: 4 },
   tileType: {
     fontSize: fontSizes.caption,
     fontWeight: "600",

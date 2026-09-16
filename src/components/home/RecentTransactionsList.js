@@ -8,6 +8,7 @@ import { useI18n } from "../../i18n";
 import { joinMeta } from "../../utils/bidi";
 import { categoryName } from "../../utils/categories";
 import { formatTransactionDate, zonedDayKey } from "../../utils/date";
+import { isRTL } from "../../utils/rtl";
 import { formatSignedMoney } from "../../utils/money";
 
 /**
@@ -114,6 +115,7 @@ function TransactionRow({ transaction, isLast }) {
     transaction.description ? categoryLabel : null,
     transaction.account?.name,
   ]);
+  const writingDirection = isRTL() ? "rtl" : "ltr";
 
   return (
     <View style={[styles.row, isLast && styles.rowLast]}>
@@ -127,17 +129,30 @@ function TransactionRow({ transaction, isLast }) {
       </View>
 
       <View style={styles.body}>
-        <Text style={styles.title} numberOfLines={1}>
+        <Text
+          style={[styles.title, { writingDirection }]}
+          numberOfLines={1}
+          ellipsizeMode="tail"
+        >
           {title}
         </Text>
         {meta ? (
-          <Text style={styles.meta} numberOfLines={1}>
+          <Text
+            style={[styles.meta, { writingDirection }]}
+            numberOfLines={1}
+            ellipsizeMode="tail"
+          >
             {meta}
           </Text>
         ) : null}
       </View>
 
-      <Text style={[styles.amount, { color }]}>{amount}</Text>
+      <Text
+        style={[styles.amount, { color, writingDirection }]}
+        numberOfLines={1}
+      >
+        {amount}
+      </Text>
     </View>
   );
 }
@@ -166,14 +181,16 @@ const createStyles = (colors) =>
   glyphWrap: {
     width: 38,
     height: 38,
+    flexShrink: 0,
     borderRadius: radii.md,
     alignItems: "center",
     justifyContent: "center",
-    marginStart: spacing.md,
   },
   glyph: { fontSize: 18 },
 
-  body: { flex: 1 },
+  // The row's only flexible column, and the only place its gaps come from —
+  // see TransactionListItem for why the icon carries no margin.
+  body: { flex: 1, minWidth: 0, marginHorizontal: spacing.md },
   title: {
     fontSize: fontSizes.bodyLarge,
     fontWeight: "600",
@@ -189,7 +206,8 @@ const createStyles = (colors) =>
   amount: {
     fontSize: fontSizes.bodyLarge,
     fontWeight: "bold",
-    marginEnd: spacing.sm,
+    flexShrink: 0,
+    textAlign: "auto",
   },
 
   empty: { alignItems: "center", paddingVertical: spacing.xl },

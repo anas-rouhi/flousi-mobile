@@ -5,13 +5,13 @@ import {
   StyleSheet,
   ScrollView,
   TouchableOpacity,
-  ActivityIndicator,
   RefreshControl,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import CashflowCard from "../components/analytics/CashflowCard";
 import DirectionalIcon from "../components/ui/DirectionalIcon";
 import CategoryDistribution from "../components/analytics/CategoryDistribution";
+import { AnalyticsSkeleton } from "../components/ui/Skeleton";
 import { fontSizes, radii, spacing } from "../constants/theme";
 import { useTheme, useThemedStyles } from "../context/ThemeContext";
 import { describeApiError, isRetryableError } from "../services/api";
@@ -126,9 +126,7 @@ export default function AnalyticsScreen() {
       </View>
 
       {loading ? (
-        <View style={styles.center}>
-          <ActivityIndicator size="large" color={colors.primary} />
-        </View>
+        <AnalyticsSkeleton />
       ) : error && !analytics ? (
         <View style={styles.center}>
           <Text style={styles.errorTitle}>{error}</Text>

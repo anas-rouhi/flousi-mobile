@@ -67,7 +67,9 @@ function CategoryRow({ category, currency }) {
             {categoryName(category, category.category_id)}
           </Text>
         </View>
-        <Text style={styles.amount}>{formatMoney(category, currency)}</Text>
+        <Text style={styles.amount} numberOfLines={1}>
+          {formatMoney(category, currency)}
+        </Text>
       </View>
 
       <View style={styles.track}>
@@ -105,18 +107,23 @@ const createStyles = (colors) =>
   },
 
   row: { marginBottom: spacing.lg },
+  // `gap` keeps name and figure apart whatever the direction; the name gives
+  // way first so the amount is never clipped or pushed into it.
   header: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
+    gap: spacing.md,
     marginBottom: spacing.sm,
   },
   identity: {
     flexDirection: "row",
     alignItems: "center",
     flexShrink: 1,
+    minWidth: 0,
+    gap: 7,
   },
-  glyph: { fontSize: 15, marginStart: 7 },
+  glyph: { fontSize: 15 },
   name: {
     fontSize: fontSizes.bodyLarge,
     fontWeight: "600",
@@ -127,7 +134,8 @@ const createStyles = (colors) =>
     fontSize: fontSizes.bodyLarge,
     fontWeight: "bold",
     color: colors.text,
-    marginEnd: spacing.sm,
+    flexShrink: 0,
+    textAlign: "auto",
   },
 
   track: {

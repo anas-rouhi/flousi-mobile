@@ -3,6 +3,7 @@ import { Text, StyleSheet, TouchableOpacity } from "react-native";
 import { shadows } from "../../constants/theme";
 import { useThemedStyles } from "../../context/ThemeContext";
 import { useI18n } from "../../i18n";
+import { tapFeedback } from "../../utils/haptics";
 
 /**
  * The floating primary action. Pinned bottom-right by the screen that hosts it,
@@ -15,7 +16,10 @@ export default function QuickActionButton({ onPress, label, style }) {
   return (
     <TouchableOpacity
       style={[styles.fab, style]}
-      onPress={onPress}
+      onPress={() => {
+        tapFeedback();
+        onPress?.();
+      }}
       activeOpacity={0.85}
       accessibilityRole="button"
       accessibilityLabel={label ?? t("home.add_transaction")}

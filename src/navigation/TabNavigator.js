@@ -4,6 +4,7 @@ import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { fontSizes } from "../constants/theme";
 import { useTheme, useThemedStyles } from "../context/ThemeContext";
 import { useI18n } from "../i18n";
+import { selectionFeedback } from "../utils/haptics";
 import AnalyticsScreen from "../screens/AnalyticsScreen";
 import GoalsScreen from "../screens/GoalsScreen";
 import HomeScreen from "../screens/HomeScreen";
@@ -70,6 +71,9 @@ export default function TabNavigator() {
   const { t } = useI18n();
   return (
     <Tab.Navigator
+      // Fires on the press itself, including a press on the active tab, which
+      // is what makes the bar feel responsive rather than only the switch.
+      screenListeners={{ tabPress: () => selectionFeedback() }}
       screenOptions={{
         headerShown: false,
         tabBarActiveTintColor: colors.tabActive,

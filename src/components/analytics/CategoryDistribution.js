@@ -88,7 +88,9 @@ function CategoryRow({ category, isTop }) {
               {ltr(`${Math.round(share)}%`)}
             </Text>
           </View>
-          <Text style={styles.amount}>{ltr(category.spent_formatted)}</Text>
+          <Text style={styles.amount} numberOfLines={1}>
+            {ltr(category.spent_formatted)}
+          </Text>
         </View>
       </View>
 
@@ -133,10 +135,11 @@ const createStyles = (colors) =>
     textAlign: "auto",
     marginBottom: 6,
   },
-  topRow: { flexDirection: "row", alignItems: "center" },
-  topGlyph: { fontSize: 20, marginStart: spacing.sm },
+  topRow: { flexDirection: "row", alignItems: "center", gap: spacing.sm },
+  topGlyph: { fontSize: 20 },
   topName: {
     flex: 1,
+    minWidth: 0,
     fontSize: fontSizes.bodyLarge,
     fontWeight: "bold",
     color: colors.text,
@@ -146,6 +149,8 @@ const createStyles = (colors) =>
     fontSize: fontSizes.bodyLarge,
     fontWeight: "bold",
     color: colors.primary,
+    flexShrink: 0,
+    textAlign: "auto",
   },
 
   row: { marginBottom: spacing.lg },
@@ -153,14 +158,17 @@ const createStyles = (colors) =>
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
+    gap: spacing.md,
     marginBottom: spacing.sm,
   },
   identity: {
     flexDirection: "row",
     alignItems: "center",
     flexShrink: 1,
+    minWidth: 0,
+    gap: 7,
   },
-  glyph: { fontSize: 15, marginStart: 7 },
+  glyph: { fontSize: 15 },
   name: {
     fontSize: fontSizes.body,
     fontWeight: "600",
@@ -169,18 +177,23 @@ const createStyles = (colors) =>
   },
   nameTop: { fontWeight: "bold" },
 
-  amounts: { flexDirection: "row", alignItems: "center" },
+  amounts: {
+    flexDirection: "row",
+    alignItems: "center",
+    flexShrink: 0,
+    gap: spacing.sm,
+  },
   pill: {
     borderRadius: radii.pill,
     paddingVertical: 2,
     paddingHorizontal: 7,
-    marginStart: spacing.sm,
   },
   pillText: { fontSize: fontSizes.caption, fontWeight: "bold" },
   amount: {
     fontSize: fontSizes.body,
     fontWeight: "bold",
     color: colors.text,
+    textAlign: "auto",
   },
 
   track: {

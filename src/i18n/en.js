@@ -225,6 +225,16 @@ export default {
       savings_rate: "Savings rate: {rate}",
       no_income: "No income this month",
     },
+    insight: {
+      top_category:
+        "💡 Insight: your biggest category this month is {category}, at {share}.",
+      budget_warning:
+        "⚠️ Heads up: you've used {percent} of this month's budget with {days} to go.",
+      budget_over: "⚠️ You're {amount} over this month's budget.",
+      savings: "🏆 Nicely done: you're saving {rate} of your income this month!",
+      days_left_one: "1 day",
+      days_left_other: "{count} days",
+    },
     recent_transactions: "Recent transactions",
     no_transactions: "No transactions yet",
     no_transactions_hint: "Add your first transaction to see it here",

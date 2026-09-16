@@ -629,7 +629,8 @@ const createStyles = (colors) =>
     paddingHorizontal: 14,
     marginStart: 8,
     minWidth: 104,
-    alignItems: "flex-end",
+    // Follows the reading direction rather than pinning right in both.
+    alignItems: "flex-start",
   },
   chipLabel: { fontSize: 14, fontWeight: "600", color: colors.text },
   chipMeta: { fontSize: 11, color: colors.textMuted, marginTop: 3 },
