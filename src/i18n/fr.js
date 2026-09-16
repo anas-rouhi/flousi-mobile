@@ -14,6 +14,10 @@ export default {
     ok: "OK",
     error_title: "Erreur",
     error_generic: "Un problème est survenu, réessayez",
+    unexpected_error_title: "Une erreur inattendue est survenue",
+    unexpected_error_body:
+      "Quelque chose s'est mal passé. Réessayez, et si le problème persiste, fermez puis relancez l'application.",
+    saving: "Enregistrement…",
     not_available:
       "Cette option n'est pas encore disponible — elle nécessite une mise à jour du serveur.",
     save_success: "Enregistré ✓",
@@ -140,6 +144,7 @@ export default {
     account_required: "Choisissez un compte",
     category_required: "Choisissez une catégorie",
     account_name_required: "Veuillez saisir le nom du compte",
+    current_password_required: "Veuillez saisir votre mot de passe actuel",
   },
 
   session: {
@@ -170,7 +175,32 @@ export default {
     theme_follows: "Suit l'appareil — actuellement {scheme}",
     theme_manual: "Défini manuellement",
     account: "Compte",
+    security: "Sécurité",
+    profile_unavailable:
+      "La modification du compte n'est pas encore disponible sur le serveur — elle nécessite une mise à jour.",
+    language_sync_failed:
+      "La langue a changé dans l'application, mais nous n'avons pas pu la mettre à jour sur votre compte.",
+    currency_hint: "La devise change l'affichage des nouveaux montants.",
+    timezone_device: "Utiliser le fuseau de l'appareil",
+    change_password: "Changer le mot de passe",
+    password: {
+      title: "Changer le mot de passe",
+      current: "Mot de passe actuel",
+      new: "Nouveau mot de passe",
+      confirm: "Confirmez le nouveau mot de passe",
+      submit: "Changer le mot de passe",
+      success: "Mot de passe modifié ✓",
+    },
     delete_account: "Supprimer le compte",
+    delete_account_body:
+      "Voulez-vous vraiment supprimer votre compte ? Toutes vos transactions et tous vos portefeuilles seront définitivement supprimés, sans possibilité de récupération.",
+    delete_account_continue: "Continuer",
+    delete_account_final_title: "Confirmation finale",
+    delete_account_final_body:
+      "C'est votre dernière chance d'annuler. En appuyant sur « Supprimer définitivement », tout est effacé et rien ne peut être restauré.",
+    delete_account_final_action: "Supprimer définitivement",
+    delete_account_done: "Votre compte a été supprimé.",
+    delete_account_failed: "Impossible de supprimer le compte, réessayez",
   },
 
   home: {

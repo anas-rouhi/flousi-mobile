@@ -32,6 +32,21 @@ export async function getCachedUser() {
   }
 }
 
+/**
+ * Stores the profile for the next cold start. Best-effort: a greeting
+ * convenience is never a reason to fail the call that produced it.
+ */
+export async function cacheUser(user) {
+  if (!user) {
+    return;
+  }
+  try {
+    await SecureStore.setItemAsync(USER_KEY, JSON.stringify(user));
+  } catch (error) {
+    console.log("Cached profile write failed (non-fatal):", error.message);
+  }
+}
+
 /** Raised when the keychain accepted a write but did not keep it. */
 export class SessionPersistError extends Error {
   constructor() {

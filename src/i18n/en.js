@@ -14,6 +14,10 @@ export default {
     ok: "OK",
     error_title: "Error",
     error_generic: "Something went wrong, please try again",
+    unexpected_error_title: "Something went wrong",
+    unexpected_error_body:
+      "An unexpected error stopped the app. Try again, and if it keeps happening, close the app and reopen it.",
+    saving: "Saving…",
     not_available:
       "This option isn't available yet — it needs a server update.",
     save_success: "Saved ✓",
@@ -139,6 +143,7 @@ export default {
     account_required: "Choose an account",
     category_required: "Choose a category",
     account_name_required: "Please enter the account name",
+    current_password_required: "Please enter your current password",
   },
 
   session: {
@@ -169,7 +174,32 @@ export default {
     theme_follows: "Follows the device — currently {scheme}",
     theme_manual: "Set manually",
     account: "Account",
+    security: "Security",
+    profile_unavailable:
+      "Editing your account isn't available on the server yet — it needs an update.",
+    language_sync_failed:
+      "The language changed in the app, but we couldn't update it on your account.",
+    currency_hint: "The currency changes how new amounts are shown.",
+    timezone_device: "Use the device's time zone",
+    change_password: "Change password",
+    password: {
+      title: "Change password",
+      current: "Current password",
+      new: "New password",
+      confirm: "Confirm the new password",
+      submit: "Change password",
+      success: "Password changed ✓",
+    },
     delete_account: "Delete account",
+    delete_account_body:
+      "Are you sure you want to delete your account? All your transactions and wallets will be permanently deleted and cannot be recovered.",
+    delete_account_continue: "Continue",
+    delete_account_final_title: "Final confirmation",
+    delete_account_final_body:
+      "This is your last chance to cancel. Once you tap \"Delete permanently\", everything is erased and nothing can be restored.",
+    delete_account_final_action: "Delete permanently",
+    delete_account_done: "Your account has been deleted.",
+    delete_account_failed: "Couldn't delete the account, please try again",
   },
 
   home: {

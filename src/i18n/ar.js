@@ -14,6 +14,10 @@ export default {
     ok: "واخا",
     error_title: "خطأ",
     error_generic: "وقع شي مشكل، عاود المحاولة",
+    unexpected_error_title: "حدث خطأ غير متوقع",
+    unexpected_error_body:
+      "وقع شي مشكل ما كناش متوقعينه. عاود المحاولة، وإلا بقا المشكل سد التطبيق وحلو من جديد.",
+    saving: "كيتحفظ…",
     not_available: "هاد الخيار مامفعّلش حتى دابا — كيتطلب تحديث فـ السيرفر.",
     save_success: "تحفظ ✓",
     today: "اليوم",
@@ -137,6 +141,7 @@ export default {
     account_required: "ختار الحساب",
     category_required: "ختار الفئة",
     account_name_required: "عفاك دخل سمية الحساب",
+    current_password_required: "عفاك دخل كلمة السر الحالية",
   },
 
   session: {
@@ -167,7 +172,32 @@ export default {
     theme_follows: "كيتبع الجهاز — دابا {scheme}",
     theme_manual: "محدد يدويا",
     account: "الحساب",
+    security: "الأمان",
+    profile_unavailable:
+      "تعديل الحساب مامفعّلش فـ السيرفر حتى دابا — كيتطلب تحديث.",
+    language_sync_failed:
+      "اللغة تبدلات فـ التطبيق، ولكن ما قدرناش نحدّتوها فـ الحساب.",
+    currency_hint: "العملة كتبدل كيفاش كيتعرضو المبالغ الجديدة.",
+    timezone_device: "استعمل توقيت الجهاز",
+    change_password: "بدّل كلمة السر",
+    password: {
+      title: "بدّل كلمة السر",
+      current: "كلمة السر الحالية",
+      new: "كلمة السر الجديدة",
+      confirm: "عاود كتب كلمة السر الجديدة",
+      submit: "بدّل كلمة السر",
+      success: "تبدلات كلمة السر ✓",
+    },
     delete_account: "حذف الحساب",
+    delete_account_body:
+      "هل أنت متأكد من حذف حسابك؟ سيتم حذف جميع معاملاتك ومحافظك نهائياً ولا يمكن استرجاعها.",
+    delete_account_continue: "كمل",
+    delete_account_final_title: "آخر تأكيد",
+    delete_account_final_body:
+      "هادي آخر فرصة باش تلغي. ملي تضغط «امسح نهائياً» كلشي كيتمسح ومكاينش رجوع.",
+    delete_account_final_action: "امسح نهائياً",
+    delete_account_done: "تمسح الحساب. الله يسهل.",
+    delete_account_failed: "ما قدرناش نمسحو الحساب، عاود المحاولة",
   },
 
   home: {

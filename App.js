@@ -13,6 +13,7 @@ import {
 } from "./src/context/ThemeContext";
 import { NavigationContainer } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
+import ErrorBoundary from "./src/components/common/ErrorBoundary";
 import { AuthProvider, useAuth } from "./src/context/AuthContext";
 import { LocaleProvider, useLocale } from "./src/context/LocaleContext";
 import TabNavigator from "./src/navigation/TabNavigator";
@@ -160,14 +161,17 @@ function ThemedApp() {
 
 export default function App() {
   return (
-    <SafeAreaProvider>
-      <ThemeProvider>
-        {/* Locale sits inside Theme so directional styling can read themes. */}
-        <LocaleProvider>
-          <ThemedApp />
-        </LocaleProvider>
-      </ThemeProvider>
-    </SafeAreaProvider>
+    // Outside every provider, so a provider that throws is caught too.
+    <ErrorBoundary>
+      <SafeAreaProvider>
+        <ThemeProvider>
+          {/* Locale sits inside Theme so directional styling can read themes. */}
+          <LocaleProvider>
+            <ThemedApp />
+          </LocaleProvider>
+        </ThemeProvider>
+      </SafeAreaProvider>
+    </ErrorBoundary>
   );
 }
 

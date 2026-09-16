@@ -184,6 +184,28 @@ export function AuthProvider({ children }) {
     setUser(null);
   }, []);
 
+  /** Commits a profile the API just returned (language, currency, timezone). */
+  const applyUser = useCallback((nextUser) => {
+    if (nextUser) {
+      setUser(nextUser);
+    }
+  }, []);
+
+  /**
+   * Drops the session after the account itself has been deleted server-side.
+   *
+   * No logout call: the token died with the account, and POSTing to
+   * /auth/logout would only earn a 401. Clearing the token is the whole
+   * "redirect" — the navigator's screen set is derived from it, so the
+   * dashboard unmounts and the signed-out stack takes its place.
+   */
+  const forgetSession = useCallback(async () => {
+    tokenRef.current = null;
+    await clearSession();
+    setToken(null);
+    setUser(null);
+  }, []);
+
   /** Called when the user leaves the landing page, so it is not forced again. */
   const completeOnboarding = useCallback(async () => {
     setOnboarded(true);
@@ -200,6 +222,8 @@ export function AuthProvider({ children }) {
       signIn,
       signUp,
       signOut,
+      applyUser,
+      forgetSession,
       completeOnboarding,
     }),
     [
@@ -210,6 +234,8 @@ export function AuthProvider({ children }) {
       signIn,
       signUp,
       signOut,
+      applyUser,
+      forgetSession,
       completeOnboarding,
     ],
   );

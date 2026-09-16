@@ -1,16 +1,25 @@
 {
   "expo": {
-    "name": "floussi-mobile",
-    "slug": "floussi-mobile",
+    "name": "FLOUSI",
+    "slug": "flousi",
     "version": "1.0.0",
     "scheme": "flousi",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "automatic",
+    "primaryColor": "#0A5C36",
     "ios": {
-      "supportsTablet": true
+      "bundleIdentifier": "com.flousi.app",
+      "buildNumber": "1",
+      "supportsTablet": true,
+      "infoPlist": {
+        "CFBundleDisplayName": "FLOUSI",
+        "ITSAppUsesNonExemptEncryption": false
+      }
     },
     "android": {
+      "package": "com.flousi.app",
+      "versionCode": 1,
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
