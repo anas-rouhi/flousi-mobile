@@ -3,6 +3,8 @@ import { View, Text, StyleSheet } from "react-native";
 import { Card, CardHeader, CardHeaderMeta } from "../ui/Card";
 import { fontSizes, radii, spacing } from "../../constants/theme";
 import { useTheme, useThemedStyles } from "../../context/ThemeContext";
+import { useI18n } from "../../i18n";
+import { ltr } from "../../utils/bidi";
 import { monthLabel } from "../../utils/date";
 import { centimesOf, formatMoney } from "../../utils/money";
 
@@ -17,6 +19,7 @@ import { centimesOf, formatMoney } from "../../utils/money";
 export default function MonthFlowCard({ month, period, currency }) {
   const { colors } = useTheme();
   const styles = useThemedStyles(createStyles);
+  const { t } = useI18n();
   const net = centimesOf(month?.net);
   const hasSavingsRate =
     month?.savings_rate !== null && month?.savings_rate !== undefined;
@@ -24,19 +27,19 @@ export default function MonthFlowCard({ month, period, currency }) {
   return (
     <Card>
       <CardHeader
-        title="حركة هذا الشهر"
+        title={t("home.flow.title")}
         meta={<CardHeaderMeta>{monthLabel(period)}</CardHeaderMeta>}
       />
 
       <FlowBar income={month?.income} expenses={month?.expenses} />
 
       <View style={styles.legend}>
-        <LegendDot color={colors.income} label="مدخول" />
-        <LegendDot color={colors.expense} label="مصاريف" />
+        <LegendDot color={colors.income} label={t("home.income")} />
+        <LegendDot color={colors.expense} label={t("home.expenses")} />
       </View>
 
       <View style={styles.netRow}>
-        <Text style={styles.netLabel}>الصافي</Text>
+        <Text style={styles.netLabel}>{t("home.flow.net")}</Text>
         <Text
           style={[
             styles.netValue,
@@ -48,9 +51,11 @@ export default function MonthFlowCard({ month, period, currency }) {
       </View>
 
       {hasSavingsRate ? (
-        <Text style={styles.savings}>نسبة التوفير: {month.savings_rate}%</Text>
+        <Text style={styles.savings}>
+          {t("home.flow.savings_rate", { rate: ltr(`${month.savings_rate}%`) })}
+        </Text>
       ) : (
-        <Text style={styles.savingsMuted}>ما كاينش مدخول هذا الشهر</Text>
+        <Text style={styles.savingsMuted}>{t("home.flow.no_income")}</Text>
       )}
     </Card>
   );

@@ -16,6 +16,10 @@ import { fontSizes, radii, spacing } from "../constants/theme";
 import { useTheme, useThemedStyles } from "../context/ThemeContext";
 import { describeApiError, isRetryableError } from "../services/api";
 import { fetchMonthlyAnalytics } from "../services/analytics";
+import { primeCategoryCatalog } from "../services/categories";
+import { useI18n } from "../i18n";
+import { ltr } from "../utils/bidi";
+import { formatMonthYear } from "../utils/date";
 
 /** The month the user is in, as the API counts them (1-12). */
 function currentPeriod() {
@@ -38,6 +42,7 @@ function isSameOrAfter(a, b) {
 export default function AnalyticsScreen() {
   const { colors } = useTheme();
   const styles = useThemedStyles(createStyles);
+  const { t } = useI18n();
   const [selected, setSelected] = useState(currentPeriod);
   const [analytics, setAnalytics] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -48,7 +53,11 @@ export default function AnalyticsScreen() {
     async (period, { allowRetry = true } = {}) => {
       try {
         setError(null);
-        setAnalytics(await fetchMonthlyAnalytics(period));
+        const [next] = await Promise.all([
+          fetchMonthlyAnalytics(period),
+          primeCategoryCatalog(),
+        ]);
+        setAnalytics(next);
       } catch (err) {
         if (allowRetry && isRetryableError(err)) {
           await load(period, { allowRetry: false });
@@ -85,13 +94,15 @@ export default function AnalyticsScreen() {
         onPress={() => setSelected((current) => shiftMonth(current, -1))}
         hitSlop={10}
         accessibilityRole="button"
-        accessibilityLabel="الشهر اللي قبل"
+        accessibilityLabel={t("analytics.prev_month")}
       >
         <DirectionalIcon glyph="›" style={styles.arrowText} />
       </TouchableOpacity>
 
+      {/* Built on the client rather than taken from `period.label`: the
+          server names the month in the account's language, not the UI's. */}
       <Text style={styles.monthLabel}>
-        {analytics?.period?.label ?? `${selected.month}/${selected.year}`}
+        {formatMonthYear(selected.month, selected.year)}
       </Text>
 
       <TouchableOpacity
@@ -100,7 +111,7 @@ export default function AnalyticsScreen() {
         disabled={atCurrentMonth}
         hitSlop={10}
         accessibilityRole="button"
-        accessibilityLabel="الشهر اللي بعد"
+        accessibilityLabel={t("analytics.next_month")}
       >
         <DirectionalIcon glyph="‹" style={styles.arrowText} />
       </TouchableOpacity>
@@ -110,7 +121,7 @@ export default function AnalyticsScreen() {
   return (
     <SafeAreaView style={styles.screen} edges={["top"]}>
       <View style={styles.header}>
-        <Text style={styles.title}>الإحصائيات</Text>
+        <Text style={styles.title}>{t("analytics.title")}</Text>
         {switcher}
       </View>
 
@@ -125,7 +136,7 @@ export default function AnalyticsScreen() {
             style={styles.retry}
             onPress={() => load(selected)}
           >
-            <Text style={styles.retryText}>عاود المحاولة</Text>
+            <Text style={styles.retryText}>{t("common.retry")}</Text>
           </TouchableOpacity>
         </View>
       ) : (
@@ -161,6 +172,7 @@ export default function AnalyticsScreen() {
 function DailyTrend({ days = [] }) {
   const { colors } = useTheme();
   const styles = useThemedStyles(createStyles);
+  const { t } = useI18n();
   if (!days.length) {
     return null;
   }
@@ -178,9 +190,12 @@ function DailyTrend({ days = [] }) {
   return (
     <View style={styles.trendCard}>
       <View style={styles.trendHead}>
-        <Text style={styles.trendTitle}>المصاريف نهار بنهار</Text>
+        <Text style={styles.trendTitle}>{t("analytics.daily_title")}</Text>
         <Text style={styles.trendMeta}>
-          أكبر نهار: {busiest.day} ({busiest.expense_formatted})
+          {t("analytics.busiest_day", {
+            day: busiest.day,
+            amount: ltr(busiest.expense_formatted),
+          })}
         </Text>
       </View>
 

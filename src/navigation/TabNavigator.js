@@ -3,7 +3,9 @@ import { Text, StyleSheet } from "react-native";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { fontSizes } from "../constants/theme";
 import { useTheme, useThemedStyles } from "../context/ThemeContext";
+import { useI18n } from "../i18n";
 import AnalyticsScreen from "../screens/AnalyticsScreen";
+import GoalsScreen from "../screens/GoalsScreen";
 import HomeScreen from "../screens/HomeScreen";
 import SettingsScreen from "../screens/SettingsScreen";
 import TransactionsScreen from "../screens/TransactionsScreen";
@@ -22,23 +24,30 @@ function TabIcon({ glyph, focused }) {
   );
 }
 
+/** `labelKey` is resolved at render, so a language switch relabels the bar. */
 const TABS = [
-  { name: "Home", label: "الرئيسية", glyph: "🏠", component: HomeScreen },
+  { name: "Home", labelKey: "tabs.home", glyph: "🏠", component: HomeScreen },
   {
     name: "Transactions",
-    label: "العمليات",
+    labelKey: "tabs.transactions",
     glyph: "📜",
     component: TransactionsScreen,
   },
   {
     name: "Analytics",
-    label: "الإحصائيات",
+    labelKey: "tabs.analytics",
     glyph: "📊",
     component: AnalyticsScreen,
   },
   {
+    name: "Goals",
+    labelKey: "tabs.goals",
+    glyph: "🎯",
+    component: GoalsScreen,
+  },
+  {
     name: "Settings",
-    label: "الإعدادات",
+    labelKey: "tabs.settings",
     glyph: "⚙️",
     component: SettingsScreen,
   },
@@ -58,6 +67,7 @@ const TABS = [
 export default function TabNavigator() {
   const { colors } = useTheme();
   const styles = useThemedStyles(createStyles);
+  const { t } = useI18n();
   return (
     <Tab.Navigator
       screenOptions={{
@@ -69,13 +79,13 @@ export default function TabNavigator() {
         tabBarItemStyle: styles.item,
       }}
     >
-      {TABS.map(({ name, label, glyph, component }) => (
+      {TABS.map(({ name, labelKey, glyph, component }) => (
         <Tab.Screen
           key={name}
           name={name}
           component={component}
           options={{
-            title: label,
+            title: t(labelKey),
             tabBarIcon: ({ focused }) => (
               <TabIcon glyph={glyph} focused={focused} />
             ),

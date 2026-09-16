@@ -13,6 +13,7 @@ import {
 } from "react-native";
 import { fontSizes, radii, spacing } from "../../constants/theme";
 import { useTheme, useThemedStyles } from "../../context/ThemeContext";
+import { useI18n } from "../../i18n";
 import {
   amountToCentimes,
   currencySymbol,
@@ -39,6 +40,7 @@ export default function SetBudgetModal({
 }) {
   const { colors } = useTheme();
   const styles = useThemedStyles(createStyles);
+  const { t } = useI18n();
   const [amount, setAmount] = useState("");
   const [localError, setLocalError] = useState(null);
   const submittingRef = useRef(false);
@@ -63,7 +65,7 @@ export default function SetBudgetModal({
       return;
     }
     if (centimes <= 0) {
-      setLocalError("دخل مبلغ أكبر من صفر");
+      setLocalError(t("validation.amount_positive_short"));
       return;
     }
 
@@ -95,10 +97,10 @@ export default function SetBudgetModal({
             <View style={styles.grabber} />
             <View style={styles.header}>
               <Text style={styles.headerTitle}>
-                {currentLimitCentimes > 0 ? "بدل الميزانية" : "حدد الميزانية"}
+                {currentLimitCentimes > 0 ? t("budget.edit") : t("budget.set")}
               </Text>
               <TouchableOpacity onPress={onClose} hitSlop={12}>
-                <Text style={styles.close}>إلغاء</Text>
+                <Text style={styles.close}>{t("common.cancel")}</Text>
               </TouchableOpacity>
             </View>
 
@@ -106,9 +108,7 @@ export default function SetBudgetModal({
               keyboardShouldPersistTaps="handled"
               showsVerticalScrollIndicator={false}
             >
-              <Text style={styles.caption}>
-                شحال بغيت تصرف هاد الشهر على الأكثر؟
-              </Text>
+              <Text style={styles.caption}>{t("budget.modal.caption")}</Text>
 
               <View style={styles.amountRow}>
                 <TextInput
@@ -126,7 +126,7 @@ export default function SetBudgetModal({
                 </Text>
               </View>
 
-              <Text style={styles.label}>مبالغ سريعة</Text>
+              <Text style={styles.label}>{t("budget.modal.presets")}</Text>
               <View style={styles.presets}>
                 {PRESETS.map((preset) => {
                   const active = centimes === preset;
@@ -164,7 +164,7 @@ export default function SetBudgetModal({
                 {saving ? (
                   <ActivityIndicator color={colors.onPrimary} />
                 ) : (
-                  <Text style={styles.submitText}>حفظ الميزانية</Text>
+                  <Text style={styles.submitText}>{t("budget.modal.save")}</Text>
                 )}
               </TouchableOpacity>
             </ScrollView>

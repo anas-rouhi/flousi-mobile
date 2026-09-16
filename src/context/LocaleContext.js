@@ -7,7 +7,6 @@ import React, {
   useRef,
   useState,
 } from "react";
-import { DevSettings, I18nManager } from "react-native";
 import {
   DEFAULT_LANGUAGE,
   LANGUAGES,
@@ -16,6 +15,7 @@ import {
   readLanguage,
   writeLanguage,
 } from "../services/locale";
+import { setI18nLanguage } from "../i18n/store";
 
 const LocaleContext = createContext(null);
 
@@ -34,9 +34,10 @@ export function useLocale() {
  * before anything renders — `ready` stays false until then, so the navigation
  * tree never mounts against an unknown direction and there is nothing to race.
  *
- * Direction cannot change mid-process (React Native latches it when the native
- * views are built), so `needsRestart` reports the mismatch and the UI asks for
- * an explicit restart rather than pretending to flip.
+ * Direction is applied as a `direction` style on the root view (see App.js),
+ * which flips layout instantly — nothing here needs a restart any more. These
+ * fields are kept for the language-picker contract; they always report "no
+ * restart needed".
  */
 export function LocaleProvider({ children }) {
   const [language, setLanguageState] = useState(DEFAULT_LANGUAGE);
@@ -57,6 +58,7 @@ export function LocaleProvider({ children }) {
       // Applied before `ready` flips, so the first render already sits in the
       // right direction whenever the process can provide it.
       const matches = applyDirection(saved);
+      setI18nLanguage(saved);
 
       if (!mounted.current) {
         return;
@@ -69,7 +71,8 @@ export function LocaleProvider({ children }) {
 
   /**
    * Persists a language and reports whether the app has to restart to render
-   * it. The caller does the asking — this never restarts on its own.
+   * it. The `direction` style flips layout instantly, so this always reports
+   * "no restart needed".
    */
   const setLanguage = useCallback(
     async (next) => {
@@ -79,6 +82,9 @@ export function LocaleProvider({ children }) {
 
       await writeLanguage(next);
       const matches = applyDirection(next);
+      // The store is switched before the state commit below, so the re-render
+      // that commit triggers already resolves `t()` in the new language.
+      setI18nLanguage(next);
 
       if (mounted.current) {
         setLanguageState(next);
@@ -89,34 +95,17 @@ export function LocaleProvider({ children }) {
     [language],
   );
 
-  /**
-   * Reloads the JS bundle so the new direction takes hold.
-   *
-   * `DevSettings.reload()` exists in development builds only. In a production
-   * build this returns false and the caller tells the user to reopen the app —
-   * a real auto-restart there needs expo-updates, which is not a dependency.
-   */
-  const restart = useCallback(() => {
-    if (__DEV__ && typeof DevSettings?.reload === "function") {
-      DevSettings.reload();
-      return true;
-    }
-    return false;
-  }, []);
-
   const value = useMemo(
     () => ({
       language,
       languages: LANGUAGES,
-      isRTL: I18nManager.isRTL,
-      /** The direction this language wants, even if the process disagrees. */
+      isRTL: isRtlLanguage(language),
       wantsRTL: isRtlLanguage(language),
       ready,
       needsRestart,
       setLanguage,
-      restart,
     }),
-    [language, ready, needsRestart, setLanguage, restart],
+    [language, ready, needsRestart, setLanguage],
   );
 
   return (

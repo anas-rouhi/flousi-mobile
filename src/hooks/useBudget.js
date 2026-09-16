@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
+import { t } from "../i18n/store";
 import { describeApiError } from "../services/api";
 import {
   fetchCurrentBudget,
@@ -86,7 +87,7 @@ export function useBudget({ spentCentimes = 0, enabled = true } = {}) {
           // Distinguished from a genuine failure so the UI can say the feature
           // is not on the server yet instead of blaming the input.
           setUnavailable(true);
-          setError("خدمة الميزانية مامفعّلة فـ السيرفر حتى دابا");
+          setError(t("budget.unavailable"));
         } else {
           setError(describeApiError(err));
         }

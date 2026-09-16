@@ -9,7 +9,10 @@ import {
 import { categoryGlyph } from "../../constants/categoryIcons";
 import { fontSizes, radii, spacing } from "../../constants/theme";
 import { useTheme, useThemedStyles } from "../../context/ThemeContext";
-import { formatMoney } from "../../utils/money";
+import { useI18n } from "../../i18n";
+import { joinMeta } from "../../utils/bidi";
+import { categoryName } from "../../utils/categories";
+import { formatSignedMoney } from "../../utils/money";
 import { isRTL } from "../../utils/rtl";
 
 /** Transfers are neither a gain nor a loss, so they get their own colour. */
@@ -36,12 +39,15 @@ export default function TransactionListItem({
 }) {
   const { colors } = useTheme();
   const styles = useThemedStyles(createStyles);
+  const { t } = useI18n();
   const { color, sign } = directionFor(transaction.type, colors);
   const category = transaction.category;
+  const categoryLabel = categoryName(category, transaction.category_id);
 
-  const title = transaction.description || category?.name || "معاملة";
-  const meta = [
-    transaction.description ? category?.name : null,
+  const title =
+    transaction.description || categoryLabel || t("common.transaction_fallback");
+  const meta = joinMeta([
+    transaction.description ? categoryLabel : null,
     transaction.account?.name,
     // Transfers name where the money went, which is the point of the row.
     // U+2192 is not auto-mirrored by bidi, so the glyph is chosen by direction
@@ -49,9 +55,11 @@ export default function TransactionListItem({
     transaction.destination_account?.name
       ? `${isRTL() ? "←" : "→"} ${transaction.destination_account.name}`
       : null,
-  ]
-    .filter(Boolean)
-    .join(" • ");
+  ]);
+
+  // The sign goes inside the amount's LTR isolate. Rendered as a sibling in
+  // front of it, an RTL line put the minus after the currency: "15,50 DH-".
+  const amount = formatSignedMoney(transaction, transaction.currency, sign);
 
   return (
     <TouchableOpacity
@@ -84,10 +92,7 @@ export default function TransactionListItem({
         ) : null}
       </View>
 
-      <Text style={[styles.amount, { color }]}>
-        {sign}
-        {formatMoney(transaction, transaction.currency)}
-      </Text>
+      <Text style={[styles.amount, { color }]}>{amount}</Text>
     </TouchableOpacity>
   );
 }

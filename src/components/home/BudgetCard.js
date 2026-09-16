@@ -10,7 +10,9 @@ import { Card, CardHeader } from "../ui/Card";
 import { fontSizes, radii, spacing } from "../../constants/theme";
 import { useTheme, useThemedStyles } from "../../context/ThemeContext";
 import { BUDGET_STATE } from "../../hooks/useBudget";
-import { MONTH_NAMES } from "../../utils/date";
+import { useI18n } from "../../i18n";
+import { ltr } from "../../utils/bidi";
+import { monthName as localizedMonth } from "../../utils/date";
 import { formatCentimes } from "../../utils/money";
 
 /** Bar and accent colour per budget state, in the active palette. */
@@ -25,9 +27,12 @@ function stateColor(state, colors) {
 }
 
 /**
- * The month name, from either period shape the card can be handed:
- * the budget API sends `month` as a number 1-12 with a `label`, while the
- * dashboard's period sends it as the string "2026-09".
+ * The month name in the UI language, from either period shape the card can be
+ * handed: the budget API sends `month` as a number 1-12 with a `label`, while
+ * the dashboard's period sends it as the string "2026-09".
+ *
+ * The server's `label` is only a last resort — it is written in the account's
+ * language, which need not be the one on screen.
  */
 function monthName(period) {
   if (!period) {
@@ -35,12 +40,12 @@ function monthName(period) {
   }
 
   if (Number.isInteger(period.month)) {
-    return MONTH_NAMES[period.month - 1] || period.label || "";
+    return localizedMonth(period.month, period.year) || period.label || "";
   }
 
   if (typeof period.month === "string") {
-    const [, month] = period.month.split("-");
-    return MONTH_NAMES[Number(month) - 1] || period.month;
+    const [year, month] = period.month.split("-").map(Number);
+    return localizedMonth(month, year) || period.month;
   }
 
   return period.label || "";
@@ -67,6 +72,7 @@ export default function BudgetCard({
 }) {
   const { colors } = useTheme();
   const styles = useThemedStyles(createStyles);
+  const { t } = useI18n();
   // ---- State A: nothing configured yet ----
   if (!hasBudget) {
     // The banner renders even while the budget request is still in flight: a
@@ -75,10 +81,8 @@ export default function BudgetCard({
     // Only the button waits, so a limit cannot be set against unknown state.
     return (
       <Card style={styles.emptyCard}>
-        <Text style={styles.emptyTitle}>مازال ما حددتي ميزانية هاد الشهر</Text>
-        <Text style={styles.emptyBody}>
-          حدد سقف للمصاريف وتبّع بشحال باقي ليك نهار بنهار.
-        </Text>
+        <Text style={styles.emptyTitle}>{t("budget.empty_title")}</Text>
+        <Text style={styles.emptyBody}>{t("budget.empty_body")}</Text>
         <TouchableOpacity
           style={[styles.emptyButton, loading && styles.emptyButtonLoading]}
           onPress={onSetBudget}
@@ -88,7 +92,7 @@ export default function BudgetCard({
           {loading ? (
             <ActivityIndicator color={colors.onPrimary} size="small" />
           ) : (
-            <Text style={styles.emptyButtonText}>حدد الميزانية</Text>
+            <Text style={styles.emptyButtonText}>{t("budget.set")}</Text>
           )}
         </TouchableOpacity>
       </Card>
@@ -99,17 +103,18 @@ export default function BudgetCard({
   const accent = stateColor(state, colors);
   const overspent = remainingCentimes < 0;
   const rounded = Math.round(percentage);
+  const month = monthName(period);
 
   return (
     <Card>
       <CardHeader
-        title={`ميزانية ${monthName(period)}`.trim()}
+        title={month ? t("budget.title_month", { month }) : t("budget.title")}
         meta={
           <TouchableOpacity
             onPress={onSetBudget}
             hitSlop={10}
             accessibilityRole="button"
-            accessibilityLabel="بدل الميزانية"
+            accessibilityLabel={t("budget.edit")}
           >
             {/* Pencil: the app has no icon font, so the glyph carries it. */}
             <Text style={styles.editIcon}>✏️</Text>
@@ -139,15 +144,21 @@ export default function BudgetCard({
       </View>
 
       <View style={styles.footer}>
-        <Text style={[styles.percentage, { color: accent }]}>{rounded}%</Text>
+        <Text style={[styles.percentage, { color: accent }]}>
+          {ltr(`${rounded}%`)}
+        </Text>
 
         {overspent ? (
           <Text style={[styles.remaining, { color: colors.budgetOver }]}>
-            فتيها بـ {formatCentimes(Math.abs(remainingCentimes), currency)}
+            {t("budget.over_by", {
+              amount: formatCentimes(Math.abs(remainingCentimes), currency),
+            })}
           </Text>
         ) : (
           <Text style={styles.remaining}>
-            باقي ليك {formatCentimes(remainingCentimes, currency)}
+            {t("budget.remaining", {
+              amount: formatCentimes(remainingCentimes, currency),
+            })}
           </Text>
         )}
       </View>
@@ -155,7 +166,7 @@ export default function BudgetCard({
       {state === BUDGET_STATE.over ? (
         <View style={[styles.banner, { backgroundColor: colors.budgetOverSurface }]}>
           <Text style={[styles.bannerText, { color: colors.budgetOver }]}>
-            فتي الميزانية!
+            {t("budget.over_banner")}
           </Text>
         </View>
       ) : state === BUDGET_STATE.warning ? (
@@ -163,7 +174,7 @@ export default function BudgetCard({
           style={[styles.banner, { backgroundColor: colors.budgetWarningSurface }]}
         >
           <Text style={[styles.bannerText, { color: colors.budgetWarning }]}>
-            قريب توصل للسقف — تسنّى فـ المصاريف
+            {t("budget.warning_banner")}
           </Text>
         </View>
       ) : null}

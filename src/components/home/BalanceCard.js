@@ -2,6 +2,8 @@ import React from "react";
 import { View, Text, StyleSheet } from "react-native";
 import { fontSizes, radii, shadows, spacing } from "../../constants/theme";
 import { useThemedStyles } from "../../context/ThemeContext";
+import { useI18n } from "../../i18n";
+import { joinMeta } from "../../utils/bidi";
 import { formatMoney, formatSignedMoney } from "../../utils/money";
 
 /**
@@ -15,25 +17,29 @@ import { formatMoney, formatSignedMoney } from "../../utils/money";
  */
 export default function BalanceCard({ balance, month, currency }) {
   const styles = useThemedStyles(createStyles);
+  const { t } = useI18n();
   const otherCurrencies = balance?.other_currencies || [];
 
   return (
     <View style={styles.card}>
-      <Text style={styles.label}>الرصيد الإجمالي المتوفر</Text>
+      <Text style={styles.label}>{t("home.balance.title")}</Text>
       <Text style={styles.value}>{formatMoney(balance, currency)}</Text>
       <Text style={styles.meta}>
-        {balance?.accounts_count || 0} حساب • {currency}
+        {joinMeta([
+          t("common.accounts_count", { count: balance?.accounts_count || 0 }),
+          currency,
+        ])}
       </Text>
 
       {/* Month flows, so the headline figure has context without a tap. */}
       <View style={styles.flows}>
         <Flow
-          label="مدخول هاد الشهر"
+          label={t("home.balance.month_income")}
           value={formatSignedMoney(month?.income, currency, "+")}
         />
         <View style={styles.flowDivider} />
         <Flow
-          label="مصاريف هاد الشهر"
+          label={t("home.balance.month_expenses")}
           value={formatSignedMoney(month?.expenses, currency, "-")}
           align="flex-end"
         />
@@ -41,14 +47,16 @@ export default function BalanceCard({ balance, month, currency }) {
 
       {otherCurrencies.length ? (
         <View style={styles.otherCurrencies}>
-          <Text style={styles.otherCurrenciesLabel}>عملات أخرى</Text>
+          <Text style={styles.otherCurrenciesLabel}>
+            {t("home.balance.other_currencies")}
+          </Text>
           {otherCurrencies.map((row) => (
             <View key={row.currency} style={styles.otherCurrencyRow}>
               <Text style={styles.otherCurrencyAmount}>
                 {formatMoney(row, row.currency)}
               </Text>
               <Text style={styles.otherCurrencyMeta}>
-                {row.accounts_count} حساب
+                {t("common.accounts_count", { count: row.accounts_count })}
               </Text>
             </View>
           ))}

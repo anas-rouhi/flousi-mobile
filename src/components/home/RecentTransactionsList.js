@@ -4,11 +4,14 @@ import { Card, CardHeader, CardHeaderMeta } from "../ui/Card";
 import { categoryGlyph } from "../../constants/categoryIcons";
 import { fontSizes, radii, spacing } from "../../constants/theme";
 import { useTheme, useThemedStyles } from "../../context/ThemeContext";
+import { useI18n } from "../../i18n";
+import { joinMeta } from "../../utils/bidi";
+import { categoryName } from "../../utils/categories";
 import { formatTransactionDate, zonedDayKey } from "../../utils/date";
 import { formatSignedMoney } from "../../utils/money";
 
 /**
- * Recent activity, grouped under day headings (اليوم / أمس / a date).
+ * Recent activity, grouped under day headings (today / yesterday / a date).
  *
  * Grouping keys come from `zonedDayKey`, which resolves the day in the *user's*
  * timezone rather than the device's — otherwise a late-night entry lands under
@@ -17,6 +20,7 @@ import { formatSignedMoney } from "../../utils/money";
  */
 export default function RecentTransactionsList({ transactions = [], timezone }) {
   const styles = useThemedStyles(createStyles);
+  const { t, language } = useI18n();
   const groups = useMemo(() => {
     const byDay = new Map();
 
@@ -35,23 +39,28 @@ export default function RecentTransactionsList({ transactions = [], timezone }) 
     }
 
     return [...byDay.values()];
-  }, [transactions, timezone]);
+    // `language` re-labels the day headings when the language changes.
+  }, [transactions, timezone, language]);
 
   return (
     <Card>
       <CardHeader
-        title="آخر المعاملات"
+        title={t("home.recent_transactions")}
         meta={
           transactions.length ? (
-            <CardHeaderMeta>{transactions.length} معاملة</CardHeaderMeta>
+            <CardHeaderMeta>
+              {t("common.transactions_count", { count: transactions.length })}
+            </CardHeaderMeta>
           ) : null
         }
       />
 
       {transactions.length === 0 ? (
         <View style={styles.empty}>
-          <Text style={styles.emptyTitle}>ما كاينة حتى معاملة</Text>
-          <Text style={styles.emptySubtitle}>زيد أول معاملة باش تبان هنا</Text>
+          <Text style={styles.emptyTitle}>{t("home.no_transactions")}</Text>
+          <Text style={styles.emptySubtitle}>
+            {t("home.no_transactions_hint")}
+          </Text>
         </View>
       ) : (
         groups.map((group, groupIndex) => (
@@ -83,6 +92,7 @@ export default function RecentTransactionsList({ transactions = [], timezone }) 
 function TransactionRow({ transaction, isLast }) {
   const { colors } = useTheme();
   const styles = useThemedStyles(createStyles);
+  const { t } = useI18n();
   const isExpense = transaction.type === "expense";
   const color = isExpense ? colors.expense : colors.income;
   const category = transaction.category;
@@ -97,13 +107,13 @@ function TransactionRow({ transaction, isLast }) {
 
   // Description is optional; the category name stands in, and is then dropped
   // from the meta line so it does not appear twice.
-  const title = transaction.description || category?.name || "معاملة";
-  const meta = [
-    transaction.description ? category?.name : null,
+  const categoryLabel = categoryName(category, transaction.category_id);
+  const title =
+    transaction.description || categoryLabel || t("common.transaction_fallback");
+  const meta = joinMeta([
+    transaction.description ? categoryLabel : null,
     transaction.account?.name,
-  ]
-    .filter(Boolean)
-    .join(" • ");
+  ]);
 
   return (
     <View style={[styles.row, isLast && styles.rowLast]}>

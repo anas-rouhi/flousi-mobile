@@ -1,8 +1,6 @@
 import React from "react";
 import {
   View,
-  Text,
-  TouchableOpacity,
   ActivityIndicator,
   StyleSheet,
 } from "react-native";
@@ -112,60 +110,20 @@ function RootNavigator() {
   );
 }
 
-/**
- * Blocks the app when the running process is laid out the wrong way round.
- *
- * React Native builds its native views with one layout direction and keeps it
- * for the life of the process, so a language whose direction differs from the
- * live one cannot simply re-render — the tree has to be rebuilt. Rather than
- * show a mirrored-wrong UI, this asks, explicitly, for the restart.
- */
-function RestartGate() {
-  const { colors, isDark } = useTheme();
-  const { wantsRTL, restart } = useLocale();
-  const styles = useThemedStyles(createStyles);
-
-  return (
-    <View style={styles.center}>
-      <StatusBar style={isDark ? "light" : "dark"} />
-      <Text style={styles.gateTitle}>
-        {wantsRTL ? "خاص إعادة تشغيل" : "Restart required"}
-      </Text>
-      <Text style={styles.gateBody}>
-        {wantsRTL
-          ? "اتجاه الشاشة تبدل. عاود شغّل التطبيق باش يتطبق."
-          : "The layout direction changed. Restart the app to apply it."}
-      </Text>
-      <TouchableOpacity
-        style={styles.gateButton}
-        onPress={restart}
-        activeOpacity={0.85}
-      >
-        <Text style={[styles.gateButtonText, { color: colors.onPrimary }]}>
-          {wantsRTL ? "عاود شغّل" : "Restart"}
-        </Text>
-      </TouchableOpacity>
-    </View>
-  );
-}
-
 function ThemedApp() {
   const { colors, isDark } = useTheme();
-  const { ready, needsRestart } = useLocale();
+  const { ready, wantsRTL } = useLocale();
 
-  // Nothing mounts until the persisted language has been read and its
-  // direction applied, so the navigation tree is never built against an
-  // unknown direction.
+  // Nothing mounts until the persisted language has been read, so the
+  // navigation tree is never built against an unknown direction. The root
+  // view's `direction` style (Yoga) is what actually flips layout: it cascades
+  // through every child and works even where `I18nManager.forceRTL` cannot.
   if (!ready) {
     return (
       <View style={[styles.boot, { backgroundColor: colors.background }]}>
         <ActivityIndicator size="large" color={colors.primary} />
       </View>
     );
-  }
-
-  if (needsRestart) {
-    return <RestartGate />;
   }
 
   const navigationTheme = {
@@ -188,13 +146,15 @@ function ThemedApp() {
   };
 
   return (
-    <AuthProvider>
-      {/* Inverted against the ground, so icons stay legible in both themes. */}
-      <StatusBar style={isDark ? "light" : "dark"} />
-      <NavigationContainer theme={navigationTheme} linking={linking}>
-        <RootNavigator />
-      </NavigationContainer>
-    </AuthProvider>
+    <View style={[styles.root, { direction: wantsRTL ? "rtl" : "ltr" }]}>
+      <AuthProvider>
+        {/* Inverted against the ground, so icons stay legible in both themes. */}
+        <StatusBar style={isDark ? "light" : "dark"} />
+        <NavigationContainer theme={navigationTheme} linking={linking}>
+          <RootNavigator />
+        </NavigationContainer>
+      </AuthProvider>
+    </View>
   );
 }
 
@@ -202,7 +162,7 @@ export default function App() {
   return (
     <SafeAreaProvider>
       <ThemeProvider>
-        {/* Locale sits inside Theme so the restart gate can be themed. */}
+        {/* Locale sits inside Theme so directional styling can read themes. */}
         <LocaleProvider>
           <ThemedApp />
         </LocaleProvider>
@@ -214,6 +174,7 @@ export default function App() {
 /** Pre-theme sheet, used while the locale bootstrap is still running. */
 const styles = StyleSheet.create({
   boot: { flex: 1, alignItems: "center", justifyContent: "center" },
+  root: { flex: 1 },
 });
 
 const createStyles = (colors) =>
@@ -225,25 +186,4 @@ const createStyles = (colors) =>
       backgroundColor: colors.background,
       padding: 24,
     },
-    gateTitle: {
-      fontSize: 19,
-      fontWeight: "bold",
-      color: colors.text,
-      textAlign: "center",
-    },
-    gateBody: {
-      fontSize: 14,
-      lineHeight: 22,
-      color: colors.textSecondary,
-      textAlign: "center",
-      marginTop: 8,
-      marginBottom: 20,
-    },
-    gateButton: {
-      backgroundColor: colors.primary,
-      borderRadius: 14,
-      paddingVertical: 14,
-      paddingHorizontal: 32,
-    },
-    gateButtonText: { fontSize: 15, fontWeight: "bold" },
   });

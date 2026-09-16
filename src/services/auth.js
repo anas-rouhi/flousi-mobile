@@ -1,4 +1,5 @@
 import * as SecureStore from "expo-secure-store";
+import { getLanguage, t } from "../i18n/store";
 import api, { describeValidationError } from "./api";
 
 /**
@@ -10,13 +11,6 @@ import api, { describeValidationError } from "./api";
  */
 const TOKEN_KEY = "user_token";
 const USER_KEY = "user_profile";
-
-/**
- * The language new accounts are created with. The API accepts `fr`, `ar` or
- * `en` and defaults to `fr`; the UI is Arabic, so registration asks for `ar`.
- * When a language switcher exists this becomes a parameter instead.
- */
-export const DEFAULT_LANGUAGE = "ar";
 
 export async function getToken() {
   try {
@@ -132,9 +126,9 @@ export async function register({ name, email, password }) {
     password,
     // Sent explicitly because the API defaults `preferred_language` to French.
     // The server uses it to name the starter wallet ("كاش" rather than
-    // "Espèces") and to resolve category names, so without this a user of an
-    // Arabic UI receives French data inside it.
-    preferred_language: DEFAULT_LANGUAGE,
+    // "Espèces") and to resolve category names, so the account is created in
+    // whatever language the UI was showing at sign-up.
+    preferred_language: getLanguage(),
   });
   const { token, user } = response.data;
 
@@ -181,7 +175,7 @@ export async function fetchMe() {
  */
 export function describeAuthError(error) {
   if (error?.code === "ERR_SESSION_PERSIST") {
-    return "ما قدرناش نحفظو الجلسة على الجهاز، عاود المحاولة";
+    return t("auth.errors.session_persist");
   }
   return describeValidationError(error);
 }

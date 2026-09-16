@@ -8,9 +8,12 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useTheme, useThemedStyles } from "../context/ThemeContext";
+import { useI18n } from "../i18n";
 
-
-/** The four pillars of the product, in pitch order. */
+/**
+ * The four pillars of the product, in pitch order. Copy lives in the
+ * dictionaries under `onboarding.features.<key>`.
+ */
 const FEATURES = [
   {
     key: "tracking",
@@ -18,39 +21,16 @@ const FEATURES = [
     // The brand accent follows the theme; the other three are one-off
     // illustration colours that read correctly on either ground.
     accentToken: "primary",
-    title: "سجل مصروفك فـ أقل من 5 ثواني",
-    subtitle: "Suivi ultra-rapide",
-    body: "زيد المصروف بالدارجة ولا بالفرنسية بضغطة وحدة. بلا جداول، بلا تعقيد — كتب «قهوة 12 درهم» وصافي.",
   },
-  {
-    key: "assistant",
-    glyph: "🤖",
-    accent: "#1F6F8B",
-    title: "مساعد ذكي كيهدر الدارجة",
-    subtitle: "Assistant IA en Darija",
-    body: "سولو «شحال صرفت هاد الشهر؟» ولا «فين كثر ما صرفت؟» وجاوبك بالدارجة، ويعطيك نصائح على حساب عاداتك.",
-  },
-  {
-    key: "budget",
-    glyph: "🎯",
-    accent: "#C97B0B",
-    title: "ميزانية وتوفير بذكاء",
-    subtitle: "Budgets & épargne intelligents",
-    body: "حدد سقف لكل فئة، تبّع نسبة التوفير ديالك شهر بشهر، وعرف فين ممكن تنقص قبل ما تسالي الشهر.",
-  },
-  {
-    key: "privacy",
-    glyph: "🔒",
-    accent: "#5B4B8A",
-    title: "معطياتك ديالك بوحدك",
-    subtitle: "Confidentialité & sécurité",
-    body: "الفلوس ديالك مخزنة مشفّرة، والدخول محمي بـ token على جهازك. ما كنبيعو حتى معطية لحتى شي جهة.",
-  },
+  { key: "assistant", glyph: "🤖", accent: "#1F6F8B" },
+  { key: "budget", glyph: "🎯", accent: "#C97B0B" },
+  { key: "privacy", glyph: "🔒", accent: "#5B4B8A" },
 ];
 
 export default function OnboardingScreen({ onCreateAccount, onLogin }) {
   const { colors } = useTheme();
   const styles = useThemedStyles(createStyles);
+  const { t } = useI18n();
   return (
     <SafeAreaView style={styles.container} edges={["top", "bottom"]}>
       <ScrollView
@@ -64,15 +44,13 @@ export default function OnboardingScreen({ onCreateAccount, onLogin }) {
           </View>
           <Text style={styles.brand}>FLOUSI</Text>
           <Text style={styles.tagline}>
-            الفلوس ديالك، مفهومة{"\n"}
+            {t("onboarding.tagline")}
+            {"\n"}
             <Text style={styles.taglineFr}>
-              Vos finances, enfin claires
+              {t("onboarding.tagline_secondary")}
             </Text>
           </Text>
-          <Text style={styles.heroBody}>
-            تطبيق مغربي لتتبع المصاريف والمداخيل، بالدارجة والفرنسية، مع مساعد
-            ذكي كيعاونك تفهم فين مشيا فلوسك.
-          </Text>
+          <Text style={styles.heroBody}>{t("onboarding.hero_body")}</Text>
         </View>
 
         {/* Feature detail */}
@@ -89,20 +67,22 @@ export default function OnboardingScreen({ onCreateAccount, onLogin }) {
                 <Text style={styles.glyph}>{feature.glyph}</Text>
               </View>
               <View style={styles.featureBody}>
-                <Text style={styles.featureTitle}>{feature.title}</Text>
-                <Text style={[styles.featureSubtitle, { color: accent }]}>
-                  {feature.subtitle}
+                <Text style={styles.featureTitle}>
+                  {t(`onboarding.features.${feature.key}.title`)}
                 </Text>
-                <Text style={styles.featureText}>{feature.body}</Text>
+                <Text style={[styles.featureSubtitle, { color: accent }]}>
+                  {t(`onboarding.features.${feature.key}.subtitle`)}
+                </Text>
+                <Text style={styles.featureText}>
+                  {t(`onboarding.features.${feature.key}.body`)}
+                </Text>
               </View>
             </View>
             );
           })}
         </View>
 
-        <Text style={styles.footnote}>
-          مجاني للبداية • بالدارجة والفرنسية • بلا إشهارات
-        </Text>
+        <Text style={styles.footnote}>{t("onboarding.footnote")}</Text>
       </ScrollView>
 
       {/* Calls to action stay pinned below the scrolling pitch. */}
@@ -113,7 +93,7 @@ export default function OnboardingScreen({ onCreateAccount, onLogin }) {
           activeOpacity={0.85}
         >
           <Text style={styles.primaryButtonText}>
-            إنشاء حساب جديد • Create Account
+            {t("onboarding.create_account")}
           </Text>
         </TouchableOpacity>
 
@@ -123,7 +103,7 @@ export default function OnboardingScreen({ onCreateAccount, onLogin }) {
           activeOpacity={0.7}
         >
           <Text style={styles.secondaryButtonText}>
-            تسجيل الدخول • Login
+            {t("onboarding.login")}
           </Text>
         </TouchableOpacity>
       </View>

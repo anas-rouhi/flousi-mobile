@@ -18,21 +18,28 @@ import { fontSizes, radii, spacing } from "../constants/theme";
 import { useTheme, useThemedStyles } from "../context/ThemeContext";
 import { useAuth } from "../context/AuthContext";
 import { useTransactions } from "../hooks/useTransactions";
+import { useI18n } from "../i18n";
+import { isolate, joinMeta } from "../utils/bidi";
+import { categoryName } from "../utils/categories";
 import { formatTransactionDate, zonedDayKey } from "../utils/date";
 import { formatMoney } from "../utils/money";
 
-/** Server-side filters; `null` means no type parameter at all. */
+/**
+ * Server-side filters; `null` means no type parameter at all. Labels are
+ * resolved from `transactions.filters.<key>` at render.
+ */
 const FILTERS = [
-  { key: "all", type: null, label: "الكل" },
-  { key: "expense", type: "expense", label: "المصاريف" },
-  { key: "income", type: "income", label: "المداخيل" },
-  { key: "transfer", type: "transfer", label: "التحويلات" },
+  { key: "all", type: null },
+  { key: "expense", type: "expense" },
+  { key: "income", type: "income" },
+  { key: "transfer", type: "transfer" },
 ];
 
 export default function TransactionsScreen() {
   const { colors } = useTheme();
   const styles = useThemedStyles(createStyles);
   const { user } = useAuth();
+  const { t, language } = useI18n();
   const [filter, setFilter] = useState(FILTERS[0]);
   const [addVisible, setAddVisible] = useState(false);
 
@@ -75,37 +82,48 @@ export default function TransactionsScreen() {
     }
 
     return [...byDay.values()];
-  }, [transactions, timezone]);
+    // `language` is a dependency so the day headings are re-labelled on a
+    // language switch — the rows themselves have not changed.
+  }, [transactions, timezone, language]);
 
   const confirmDelete = useCallback(
     (transaction) => {
-      const label = transaction.description || transaction.category?.name || "";
+      const label =
+        transaction.description ||
+        categoryName(transaction.category, transaction.category_id) ||
+        "";
       Alert.alert(
-        "تمسح المعاملة؟",
-        `${label}\n${formatMoney(transaction, transaction.currency)}\n\nهاد العملية غادي تتراجع من رصيد الحساب.`,
+        t("transactions.delete_title"),
+        `${isolate(label)}\n${formatMoney(transaction, transaction.currency)}\n\n${t("transactions.delete_note")}`,
         [
-          { text: "لا", style: "cancel" },
+          { text: t("common.no"), style: "cancel" },
           {
-            text: "امسح",
+            text: t("common.delete"),
             style: "destructive",
             onPress: async () => {
               const ok = await remove(transaction.id);
               if (!ok) {
-                Alert.alert("خطأ", "ما قدرناش نمسحو المعاملة، عاود المحاولة");
+                Alert.alert(
+                  t("common.error_title"),
+                  t("transactions.delete_failed"),
+                );
               }
             },
           },
         ],
       );
     },
-    [remove],
+    [remove, t],
   );
 
   const header = (
     <View style={styles.header}>
-      <Text style={styles.title}>العمليات</Text>
+      <Text style={styles.title}>{t("transactions.title")}</Text>
       <Text style={styles.subtitle}>
-        {total} معاملة{filter.type ? ` • ${filter.label}` : ""}
+        {joinMeta([
+          t("common.transactions_count", { count: total }),
+          filter.type ? t(`transactions.filters.${filter.key}`) : null,
+        ])}
       </Text>
     </View>
   );
@@ -117,7 +135,7 @@ export default function TransactionsScreen() {
           style={styles.search}
           value={query}
           onChangeText={setQuery}
-          placeholder="قلب فـ الوصف…"
+          placeholder={t("transactions.search_placeholder")}
           placeholderTextColor={colors.textPlaceholder}
           returnKeyType="search"
           clearButtonMode="while-editing"
@@ -130,7 +148,7 @@ export default function TransactionsScreen() {
             onPress={clearSearch}
             hitSlop={10}
             accessibilityRole="button"
-            accessibilityLabel="امسح البحث"
+            accessibilityLabel={t("transactions.clear_search")}
           >
             <Text style={styles.clearText}>✕</Text>
           </TouchableOpacity>
@@ -148,7 +166,7 @@ export default function TransactionsScreen() {
               activeOpacity={0.8}
             >
               <Text style={[styles.chipText, active && styles.chipTextActive]}>
-                {option.label}
+                {t(`transactions.filters.${option.key}`)}
               </Text>
             </TouchableOpacity>
           );
@@ -204,13 +222,13 @@ export default function TransactionsScreen() {
             <View style={styles.empty}>
               <Text style={styles.emptyTitle}>
                 {activeTerm
-                  ? `ما لقيناش نتائج لـ «${activeTerm}»`
-                  : "ما كاينة حتى معاملة"}
+                  ? t("transactions.no_results", { term: isolate(activeTerm) })
+                  : t("transactions.empty_title")}
               </Text>
               <Text style={styles.emptySubtitle}>
                 {activeTerm
-                  ? "البحث كيقلب فـ الوصف فقط"
-                  : "زيد أول معاملة بالزر لتحت"}
+                  ? t("transactions.no_results_hint")
+                  : t("transactions.empty_hint")}
               </Text>
             </View>
           )
@@ -223,7 +241,7 @@ export default function TransactionsScreen() {
             <ActivityIndicator color={colors.primary} style={styles.spinner} />
           ) : hasMore ? (
             <TouchableOpacity style={styles.more} onPress={loadMore}>
-              <Text style={styles.moreText}>حمّل المزيد</Text>
+              <Text style={styles.moreText}>{t("common.load_more")}</Text>
             </TouchableOpacity>
           ) : null
         }

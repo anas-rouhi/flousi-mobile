@@ -15,6 +15,7 @@ import { fontSizes, radii, spacing } from "../../constants/theme";
 import { useTheme, useThemedStyles } from "../../context/ThemeContext";
 import { describeValidationError } from "../../services/api";
 import { createAccount } from "../../services/accounts";
+import { useI18n } from "../../i18n";
 import {
   amountToCentimes,
   currencySymbol,
@@ -24,14 +25,11 @@ import {
 import { fixedLtrRow } from "../../utils/rtl";
 
 /**
- * Account types the API accepts. `other` is in the enum too but is omitted
- * here — it means nothing to a user choosing where their money sits.
+ * Account types the API accepts, labelled from `accounts.types.<value>`.
+ * `other` is in the enum too but is omitted here — it means nothing to a user
+ * choosing where their money sits.
  */
-const TYPES = [
-  { value: "cash", label: "كاش", hint: "Cash" },
-  { value: "bank", label: "بنك", hint: "Bank" },
-  { value: "credit_card", label: "بطاقة", hint: "Carte" },
-];
+const TYPES = ["cash", "bank", "credit_card"];
 
 export default function CreateAccountModal({
   visible,
@@ -41,6 +39,7 @@ export default function CreateAccountModal({
 }) {
   const { colors } = useTheme();
   const styles = useThemedStyles(createStyles);
+  const { t } = useI18n();
   const [name, setName] = useState("");
   const [type, setType] = useState("cash");
   const [balance, setBalance] = useState("");
@@ -75,7 +74,7 @@ export default function CreateAccountModal({
       return;
     }
     if (!name.trim()) {
-      setError("عفاك دخل سمية الحساب");
+      setError(t("validation.account_name_required"));
       return;
     }
 
@@ -122,9 +121,9 @@ export default function CreateAccountModal({
           <View style={styles.sheet}>
             <View style={styles.grabber} />
             <View style={styles.header}>
-              <Text style={styles.headerTitle}>حساب جديد</Text>
+              <Text style={styles.headerTitle}>{t("accounts.new")}</Text>
               <TouchableOpacity onPress={onClose} hitSlop={12}>
-                <Text style={styles.close}>إلغاء</Text>
+                <Text style={styles.close}>{t("common.cancel")}</Text>
               </TouchableOpacity>
             </View>
 
@@ -132,27 +131,27 @@ export default function CreateAccountModal({
               keyboardShouldPersistTaps="handled"
               showsVerticalScrollIndicator={false}
             >
-              <Text style={styles.label}>السمية</Text>
+              <Text style={styles.label}>{t("accounts.name")}</Text>
               <TextInput
                 style={styles.input}
                 value={name}
                 onChangeText={setName}
-                placeholder="مثلا: CIH Bank ولا كاش"
+                placeholder={t("accounts.name_placeholder")}
                 placeholderTextColor={colors.textPlaceholder}
                 maxLength={191}
                 autoFocus
                 editable={!submitting}
               />
 
-              <Text style={styles.label}>النوع</Text>
+              <Text style={styles.label}>{t("accounts.type")}</Text>
               <View style={styles.types}>
-                {TYPES.map((option) => {
-                  const active = option.value === type;
+                {TYPES.map((value) => {
+                  const active = value === type;
                   return (
                     <TouchableOpacity
-                      key={option.value}
+                      key={value}
                       style={[styles.typeTile, active && styles.typeTileActive]}
-                      onPress={() => setType(option.value)}
+                      onPress={() => setType(value)}
                       activeOpacity={0.8}
                     >
                       <Text
@@ -161,15 +160,14 @@ export default function CreateAccountModal({
                           active && styles.typeLabelActive,
                         ]}
                       >
-                        {option.label}
+                        {t(`accounts.types.${value}`)}
                       </Text>
-                      <Text style={styles.typeHint}>{option.hint}</Text>
                     </TouchableOpacity>
                   );
                 })}
               </View>
 
-              <Text style={styles.label}>الرصيد الحالي (اختياري)</Text>
+              <Text style={styles.label}>{t("accounts.opening_balance")}</Text>
               <View style={styles.balanceRow}>
                 <TextInput
                   style={styles.balanceInput}
@@ -201,7 +199,7 @@ export default function CreateAccountModal({
                 {submitting ? (
                   <ActivityIndicator color={colors.onPrimary} />
                 ) : (
-                  <Text style={styles.submitText}>صاوب الحساب</Text>
+                  <Text style={styles.submitText}>{t("accounts.create")}</Text>
                 )}
               </TouchableOpacity>
             </ScrollView>
@@ -292,11 +290,6 @@ const createStyles = (colors) =>
     color: colors.textSecondary,
   },
   typeLabelActive: { color: colors.primary, fontWeight: "bold" },
-  typeHint: {
-    fontSize: fontSizes.caption,
-    color: colors.textFaint,
-    marginTop: 2,
-  },
 
   balanceRow: { flexDirection: fixedLtrRow(), alignItems: "center" },
   balanceInput: {

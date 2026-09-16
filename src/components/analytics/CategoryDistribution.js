@@ -4,6 +4,9 @@ import { Card, CardHeader, CardHeaderMeta } from "../ui/Card";
 import { categoryGlyph } from "../../constants/categoryIcons";
 import { fontSizes, radii, spacing } from "../../constants/theme";
 import { useTheme, useThemedStyles } from "../../context/ThemeContext";
+import { useI18n } from "../../i18n";
+import { ltr } from "../../utils/bidi";
+import { categoryName } from "../../utils/categories";
 
 /**
  * Where the month's expenses went, largest first.
@@ -14,32 +17,35 @@ import { useTheme, useThemedStyles } from "../../context/ThemeContext";
  */
 export default function CategoryDistribution({ categories = [] }) {
   const styles = useThemedStyles(createStyles);
+  const { t } = useI18n();
   const top = categories[0];
 
   return (
     <Card>
       <CardHeader
-        title="فين مشات فلوسي؟"
+        title={t("analytics.distribution_title")}
         meta={
           categories.length ? (
-            <CardHeaderMeta>{categories.length} فئة</CardHeaderMeta>
+            <CardHeaderMeta>
+              {t("common.categories_count", { count: categories.length })}
+            </CardHeaderMeta>
           ) : null
         }
       />
 
       {categories.length === 0 ? (
-        <Text style={styles.empty}>ما كاينش مصاريف فـ هاد الشهر</Text>
+        <Text style={styles.empty}>{t("analytics.distribution_empty")}</Text>
       ) : (
         <>
           {/* The headline answer, called out before the full list. */}
           <View style={styles.topBanner}>
-            <Text style={styles.topLabel}>أكثر فئة صرفتي فيها</Text>
+            <Text style={styles.topLabel}>{t("analytics.top_category")}</Text>
             <View style={styles.topRow}>
               <Text style={styles.topGlyph}>{categoryGlyph(top.icon)}</Text>
               <Text style={styles.topName} numberOfLines={1}>
-                {top.name}
+                {categoryName(top)}
               </Text>
-              <Text style={styles.topAmount}>{top.spent_formatted}</Text>
+              <Text style={styles.topAmount}>{ltr(top.spent_formatted)}</Text>
             </View>
           </View>
 
@@ -59,6 +65,7 @@ export default function CategoryDistribution({ categories = [] }) {
 function CategoryRow({ category, isTop }) {
   const { colors } = useTheme();
   const styles = useThemedStyles(createStyles);
+  const { t } = useI18n();
   const share = Number.isFinite(category.percentage) ? category.percentage : 0;
   const color = category.color || colors.textMuted;
 
@@ -71,17 +78,17 @@ function CategoryRow({ category, isTop }) {
             style={[styles.name, isTop && styles.nameTop]}
             numberOfLines={1}
           >
-            {category.name}
+            {categoryName(category)}
           </Text>
         </View>
 
         <View style={styles.amounts}>
           <View style={[styles.pill, { backgroundColor: color + "1A" }]}>
             <Text style={[styles.pillText, { color }]}>
-              {Math.round(share)}%
+              {ltr(`${Math.round(share)}%`)}
             </Text>
           </View>
-          <Text style={styles.amount}>{category.spent_formatted}</Text>
+          <Text style={styles.amount}>{ltr(category.spent_formatted)}</Text>
         </View>
       </View>
 
@@ -94,7 +101,11 @@ function CategoryRow({ category, isTop }) {
         />
       </View>
 
-      <Text style={styles.meta}>{category.transactions_count} معاملة</Text>
+      <Text style={styles.meta}>
+        {t("common.transactions_count", {
+          count: category.transactions_count ?? 0,
+        })}
+      </Text>
     </View>
   );
 }

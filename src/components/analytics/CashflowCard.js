@@ -3,6 +3,8 @@ import { View, Text, StyleSheet } from "react-native";
 import { Card, CardHeader } from "../ui/Card";
 import { fontSizes, radii, spacing } from "../../constants/theme";
 import { useTheme, useThemedStyles } from "../../context/ThemeContext";
+import { useI18n } from "../../i18n";
+import { ltr } from "../../utils/bidi";
 
 /**
  * Income, expense and the net between them.
@@ -14,34 +16,35 @@ import { useTheme, useThemedStyles } from "../../context/ThemeContext";
 export default function CashflowCard({ summary }) {
   const { colors } = useTheme();
   const styles = useThemedStyles(createStyles);
+  const { t } = useI18n();
   const net = summary?.net_savings ?? 0;
   const netColor = net < 0 ? colors.expense : colors.primary;
   const rate = summary?.savings_rate_percentage;
 
   return (
     <Card>
-      <CardHeader title="الحركة المالية" />
+      <CardHeader title={t("analytics.cashflow")} />
 
       <View style={styles.row}>
         <Figure
-          label="المداخيل"
-          value={summary?.total_income_formatted}
+          label={t("analytics.income")}
+          value={ltr(summary?.total_income_formatted)}
           color={colors.income}
         />
         <View style={styles.divider} />
         <Figure
-          label="المصاريف"
-          value={summary?.total_expense_formatted}
+          label={t("analytics.expenses")}
+          value={ltr(summary?.total_expense_formatted)}
           color={colors.expense}
           align="flex-end"
         />
       </View>
 
       <View style={styles.netRow}>
-        <Text style={styles.netLabel}>الصافي</Text>
+        <Text style={styles.netLabel}>{t("analytics.net")}</Text>
         <View style={styles.netValueWrap}>
           <Text style={[styles.netValue, { color: netColor }]}>
-            {summary?.net_savings_formatted ?? "—"}
+            {ltr(summary?.net_savings_formatted) ?? "—"}
           </Text>
           {rate === null || rate === undefined ? null : (
             <View
@@ -54,7 +57,7 @@ export default function CashflowCard({ summary }) {
               ]}
             >
               <Text style={[styles.rateText, { color: netColor }]}>
-                توفير {rate}%
+                {t("analytics.savings_pill", { rate: ltr(`${rate}%`) })}
               </Text>
             </View>
           )}
@@ -62,7 +65,7 @@ export default function CashflowCard({ summary }) {
       </View>
 
       {rate === null || rate === undefined ? (
-        <Text style={styles.muted}>ما كاينش مدخول هاد الشهر</Text>
+        <Text style={styles.muted}>{t("analytics.no_income")}</Text>
       ) : null}
     </Card>
   );

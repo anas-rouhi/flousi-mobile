@@ -1,20 +1,27 @@
 import { I18nManager } from "react-native";
 
-export { ltr, stripLtr } from "./bidi";
+export { ltr, isolate, joinMeta, stripLtr } from "./bidi";
 
 /**
  * Direction helpers.
  *
- * With `I18nManager.forceRTL(true)` the platform mirrors `flexDirection: "row"`,
- * `textAlign: "auto"` and every `*Start`/`*End` property for us — so styles use
- * those and almost never need to ask which direction is active. These cover the
- * two cases the platform cannot infer: content that must keep a fixed visual
- * order, and glyphs that point somewhere.
+ * Layout direction is driven by the app itself — a `direction` style on the
+ * app's root view cascades through the tree (see App.js) instead of the native
+ * `I18nManager.forceRTL`, which Expo Go on the new architecture ignores. The
+ * `isRTL` below therefore reports the language the app has chosen, not the
+ * native latch.
  */
 
-/** Live at call time; direction is fixed for the life of the process. */
+let rtl = false;
+
+/** Sets the running direction; called by the locale bootstrap, never late. */
+export function setRTL(value) {
+  rtl = Boolean(value);
+}
+
+/** Live at call time; the direction the app is currently laid out in. */
 export function isRTL() {
-  return I18nManager.isRTL;
+  return rtl;
 }
 
 /**
@@ -23,10 +30,10 @@ export function isRTL() {
  * Under RTL, `row-reverse` renders visually left-to-right.
  */
 export function fixedLtrRow() {
-  return I18nManager.isRTL ? "row-reverse" : "row";
+  return rtl ? "row-reverse" : "row";
 }
 
 /** Mirrors a glyph that points somewhere (chevrons, arrows). */
 export function flipForRTL() {
-  return I18nManager.isRTL ? [{ scaleX: -1 }] : [];
+  return rtl ? [{ scaleX: -1 }] : [];
 }

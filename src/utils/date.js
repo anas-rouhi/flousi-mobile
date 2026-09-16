@@ -1,37 +1,95 @@
+import { getLocale, t } from "../i18n/store";
+
 /**
  * Dates arrive as ISO8601 strings in UTC. They are rendered in the user's own
  * timezone — the one the API reports in `period.timezone` — so a transaction
  * booked late at night in Casablanca never shows up on the wrong day because
  * the device happens to be set to another zone.
  *
- * Intl with a `timeZone` option is not guaranteed on every Hermes build, so
- * every call is guarded and falls back to reading the UTC parts of the string.
+ * Names (months, "today") follow the *app's* language through Intl with the
+ * active locale (ar-MA / fr-FR / en-US), not the device's. Intl support varies
+ * across Hermes builds, so every call is guarded: calendar maths falls back to
+ * the UTC parts of the value, and names fall back to a numeric d/m/yyyy.
  */
 
-export const MONTH_NAMES = [
-  "يناير",
-  "فبراير",
-  "مارس",
-  "أبريل",
-  "ماي",
-  "يونيو",
-  "يوليوز",
-  "غشت",
-  "شتنبر",
-  "أكتوبر",
-  "نونبر",
-  "دجنبر",
-];
+/** Tries the active locale, then its bare language ("ar-MA" → "ar"). */
+function localesFor(locale = getLocale()) {
+  const base = locale.split("-")[0];
+  return base === locale ? [locale] : [locale, base];
+}
 
-/** "2026-09" => "شتنبر 2026" */
+/** Formats `date` with Intl, or returns null when the engine cannot. */
+function intlFormat(date, options) {
+  try {
+    return new Intl.DateTimeFormat(localesFor(), options).format(date);
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * A calendar day built at UTC noon, formatted with `timeZone: "UTC"`, so the
+ * day printed is exactly the parts given — no device offset can shift it.
+ */
+function calendarDate({ year, month, day = 1 }) {
+  return new Date(Date.UTC(year, month - 1, day, 12));
+}
+
+/** "September" / "septembre" / "شتنبر" for a 1-12 month. */
+export function monthName(month, year = 2000) {
+  if (!Number.isInteger(month) || month < 1 || month > 12) {
+    return "";
+  }
+  return (
+    intlFormat(calendarDate({ year, month }), {
+      month: "long",
+      timeZone: "UTC",
+    }) ?? String(month)
+  );
+}
+
+/** "September 2026" / "septembre 2026" / "شتنبر 2026". */
+export function formatMonthYear(month, year) {
+  if (!Number.isInteger(month) || !Number.isInteger(year)) {
+    return "";
+  }
+  return (
+    intlFormat(calendarDate({ year, month }), {
+      month: "long",
+      year: "numeric",
+      timeZone: "UTC",
+    }) ?? `${month}/${year}`
+  );
+}
+
+/** Dashboard period ({ month: "2026-09" }) => "September 2026", localised. */
 export function monthLabel(period) {
   const raw = period?.month;
   if (typeof raw !== "string") {
     return "";
   }
-  const [year, month] = raw.split("-");
-  const name = MONTH_NAMES[Number(month) - 1];
-  return name ? `${name} ${year}` : raw;
+  const [year, month] = raw.split("-").map(Number);
+  return formatMonthYear(month, year) || raw;
+}
+
+/** "9 September 2026", localised; numeric when Intl is unavailable. */
+function formatDay(parts) {
+  return (
+    intlFormat(calendarDate(parts), {
+      day: "numeric",
+      month: "long",
+      year: "numeric",
+      timeZone: "UTC",
+    }) ?? `${parts.day}/${parts.month}/${parts.year}`
+  );
+}
+
+function localParts(value) {
+  return {
+    year: value.getFullYear(),
+    month: value.getMonth() + 1,
+    day: value.getDate(),
+  };
 }
 
 /**
@@ -45,28 +103,15 @@ export function formatLocalDay(date, now = new Date()) {
     return "";
   }
 
-  const parts = {
-    year: date.getFullYear(),
-    month: date.getMonth() + 1,
-    day: date.getDate(),
-  };
-  const partsOf = (value) => ({
-    year: value.getFullYear(),
-    month: value.getMonth() + 1,
-    day: value.getDate(),
-  });
+  const parts = localParts(date);
 
-  if (sameDay(parts, partsOf(now))) {
-    return "اليوم";
+  if (sameDay(parts, localParts(now))) {
+    return t("common.today");
   }
-  if (sameDay(parts, partsOf(new Date(now.getTime() - 24 * 60 * 60 * 1000)))) {
-    return "أمس";
+  if (sameDay(parts, localParts(new Date(now.getTime() - 24 * 60 * 60 * 1000)))) {
+    return t("common.yesterday");
   }
-
-  const name = MONTH_NAMES[parts.month - 1];
-  return name
-    ? `${parts.day} ${name} ${parts.year}`
-    : `${parts.day}/${parts.month}/${parts.year}`;
+  return formatDay(parts);
 }
 
 /** Calendar parts of `date` as seen in `timeZone`, or null if unsupported. */
@@ -75,6 +120,7 @@ function partsInZone(date, timeZone) {
     return null;
   }
   try {
+    // A fixed Latin-digit locale: these parts are parsed as numbers, never shown.
     const parts = new Intl.DateTimeFormat("en-US", {
       timeZone,
       year: "numeric",
@@ -134,8 +180,9 @@ export function zonedDayKey(iso, timeZone) {
 }
 
 /**
- * "اليوم" / "أمس" for the two most recent days, otherwise "9 شتنبر 2026".
- * Returns "" for a missing or unparseable value so a row never renders "NaN".
+ * "Today" / "Yesterday" for the two most recent days, otherwise the full
+ * localised date. Returns "" for a missing or unparseable value so a row never
+ * renders "NaN".
  */
 export function formatTransactionDate(iso, timeZone, now = new Date()) {
   if (!iso) {
@@ -155,14 +202,10 @@ export function formatTransactionDate(iso, timeZone, now = new Date()) {
   );
 
   if (sameDay(parts, today)) {
-    return "اليوم";
+    return t("common.today");
   }
   if (sameDay(parts, yesterday)) {
-    return "أمس";
+    return t("common.yesterday");
   }
-
-  const name = MONTH_NAMES[parts.month - 1];
-  return name
-    ? `${parts.day} ${name} ${parts.year}`
-    : `${parts.day}/${parts.month}/${parts.year}`;
+  return formatDay(parts);
 }

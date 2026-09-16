@@ -14,6 +14,8 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { useTheme, useThemedStyles } from "../context/ThemeContext";
 import { isRetryableError, describeApiError } from "../services/api";
 import { resetPassword, isDeadLinkError, fieldError } from "../services/password";
+import { useI18n } from "../i18n";
+import { ltr } from "../utils/bidi";
 
 const MIN_PASSWORD = 8;
 
@@ -29,6 +31,7 @@ const MIN_PASSWORD = 8;
 export default function ResetPasswordScreen({ navigation, route }) {
   const { colors } = useTheme();
   const styles = useThemedStyles(createStyles);
+  const { t } = useI18n();
 
   const token = route?.params?.token ?? null;
   const email = route?.params?.email ?? null;
@@ -71,11 +74,11 @@ export default function ResetPasswordScreen({ navigation, route }) {
     setPasswordError(null);
 
     if (password.length < MIN_PASSWORD) {
-      setPasswordError(`كلمة السر خاصها ${MIN_PASSWORD} حروف على الأقل`);
+      setPasswordError(t("validation.password_min", { min: MIN_PASSWORD }));
       return;
     }
     if (password !== confirmation) {
-      setPasswordError("كلمتين السر ماشي بحال بحال");
+      setPasswordError(t("validation.passwords_mismatch"));
       return;
     }
 
@@ -104,7 +107,7 @@ export default function ResetPasswordScreen({ navigation, route }) {
       } else {
         setError(
           isRetryableError(err)
-            ? "الاتصال طوّل بزاف، عاود المحاولة"
+            ? t("auth.errors.timeout")
             : describeApiError(err),
         );
       }
@@ -123,18 +126,15 @@ export default function ResetPasswordScreen({ navigation, route }) {
           <View style={[styles.badge, styles.badgeOk]}>
             <Text style={styles.badgeMarkOk}>✓</Text>
           </View>
-          <Text style={styles.title}>تبدلات كلمة السر</Text>
-          <Text style={styles.body}>
-            دابا تقدر تدخل بكلمة السر الجديدة. حيدنا الجلسات ديالك من الأجهزة
-            الأخرى، عاود دخل فيهم.
-          </Text>
+          <Text style={styles.title}>{t("auth.reset.done_title")}</Text>
+          <Text style={styles.body}>{t("auth.reset.done_body")}</Text>
 
           <TouchableOpacity
             style={styles.button}
             onPress={() => navigation.reset({ index: 0, routes: [{ name: "Login" }] })}
             activeOpacity={0.85}
           >
-            <Text style={styles.buttonText}>سير للدخول</Text>
+            <Text style={styles.buttonText}>{t("auth.reset.go_to_login")}</Text>
           </TouchableOpacity>
         </ScrollView>
       </SafeAreaView>
@@ -148,25 +148,22 @@ export default function ResetPasswordScreen({ navigation, route }) {
           <View style={[styles.badge, styles.badgeBad]}>
             <Text style={styles.badgeMarkBad}>!</Text>
           </View>
-          <Text style={styles.title}>الرابط ما بقاش صالح</Text>
-          <Text style={styles.body}>
-            الرابط ديال تبديل كلمة السر كيخدم مرة وحدة وكيسالي من بعد ساعة.
-            طلب واحد جديد.
-          </Text>
+          <Text style={styles.title}>{t("auth.reset.dead_title")}</Text>
+          <Text style={styles.body}>{t("auth.reset.dead_body")}</Text>
 
           <TouchableOpacity
             style={styles.button}
             onPress={() => navigation.navigate("ForgotPassword")}
             activeOpacity={0.85}
           >
-            <Text style={styles.buttonText}>طلب رابط جديد</Text>
+            <Text style={styles.buttonText}>{t("auth.reset.request_new")}</Text>
           </TouchableOpacity>
 
           <TouchableOpacity
             style={styles.linkRow}
             onPress={() => navigation.navigate("Login")}
           >
-            <Text style={styles.link}>رجع للدخول</Text>
+            <Text style={styles.link}>{t("auth.reset.back_to_login")}</Text>
           </TouchableOpacity>
         </ScrollView>
       </SafeAreaView>
@@ -184,12 +181,13 @@ export default function ResetPasswordScreen({ navigation, route }) {
           keyboardShouldPersistTaps="handled"
         >
           <Text style={styles.brand}>FLOUSI</Text>
-          <Text style={styles.title}>كلمة سر جديدة</Text>
-          <Text style={styles.subtitle}>{email}</Text>
+          <Text style={styles.title}>{t("auth.reset.title")}</Text>
+          {/* An address is always left-to-right, whatever the UI language. */}
+          <Text style={styles.subtitle}>{ltr(email)}</Text>
 
           {error ? <Text style={styles.error}>{error}</Text> : null}
 
-          <Text style={styles.label}>كلمة السر الجديدة</Text>
+          <Text style={styles.label}>{t("auth.reset.new_password")}</Text>
           <TextInput
             style={[styles.input, passwordError && styles.inputInvalid]}
             placeholder="••••••••"
@@ -201,7 +199,7 @@ export default function ResetPasswordScreen({ navigation, route }) {
             editable={!loading}
           />
 
-          <Text style={styles.label}>عاود كتب كلمة السر</Text>
+          <Text style={styles.label}>{t("auth.reset.confirm_password")}</Text>
           <TextInput
             style={[styles.input, passwordError && styles.inputInvalid]}
             placeholder="••••••••"
@@ -219,7 +217,7 @@ export default function ResetPasswordScreen({ navigation, route }) {
             <Text style={styles.fieldError}>{passwordError}</Text>
           ) : (
             <Text style={styles.hint}>
-              على الأقل {MIN_PASSWORD} حروف
+              {t("validation.password_hint", { min: MIN_PASSWORD })}
             </Text>
           )}
 
@@ -232,7 +230,7 @@ export default function ResetPasswordScreen({ navigation, route }) {
             {loading ? (
               <ActivityIndicator color={colors.onPrimary} />
             ) : (
-              <Text style={styles.buttonText}>بدّل كلمة السر</Text>
+              <Text style={styles.buttonText}>{t("auth.reset.submit")}</Text>
             )}
           </TouchableOpacity>
         </ScrollView>

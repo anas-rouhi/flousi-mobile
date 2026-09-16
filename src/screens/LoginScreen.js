@@ -14,11 +14,12 @@ import { useTheme, useThemedStyles } from "../context/ThemeContext";
 import { isRetryableError } from "../services/api";
 import { useAuth } from "../context/AuthContext";
 import { describeAuthError } from "../services/auth";
-
+import { useI18n } from "../i18n";
 
 export default function LoginScreen({ navigation }) {
   const { colors } = useTheme();
   const styles = useThemedStyles(createStyles);
+  const { t } = useI18n();
   const { signIn } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -43,7 +44,7 @@ export default function LoginScreen({ navigation }) {
     }
 
     if (!email.trim() || !password) {
-      setError("عفاك دخل الإيميل وكلمة السر");
+      setError(t("validation.email_password_required"));
       return;
     }
 
@@ -59,7 +60,7 @@ export default function LoginScreen({ navigation }) {
       if (mountedRef.current) {
         setError(
           isRetryableError(err)
-            ? "الاتصال طوّل بزاف، عاود المحاولة"
+            ? t("auth.errors.timeout")
             : describeAuthError(err),
         );
       }
@@ -82,12 +83,12 @@ export default function LoginScreen({ navigation }) {
           keyboardShouldPersistTaps="handled"
         >
           <Text style={styles.brand}>FLOUSI</Text>
-          <Text style={styles.title}>تسجيل الدخول</Text>
-          <Text style={styles.subtitle}>مرحبا بيك من جديد</Text>
+          <Text style={styles.title}>{t("auth.login.title")}</Text>
+          <Text style={styles.subtitle}>{t("auth.login.subtitle")}</Text>
 
           {error ? <Text style={styles.error}>{error}</Text> : null}
 
-          <Text style={styles.label}>الإيميل</Text>
+          <Text style={styles.label}>{t("auth.email")}</Text>
           <TextInput
             style={styles.input}
             placeholder="you@example.com"
@@ -100,7 +101,7 @@ export default function LoginScreen({ navigation }) {
             editable={!loading}
           />
 
-          <Text style={styles.label}>كلمة السر</Text>
+          <Text style={styles.label}>{t("auth.password")}</Text>
           <TextInput
             style={styles.input}
             placeholder="••••••••"
@@ -123,7 +124,7 @@ export default function LoginScreen({ navigation }) {
             {loading ? (
               <ActivityIndicator color={colors.onPrimary} />
             ) : (
-              <Text style={styles.buttonText}>دخول • Login</Text>
+              <Text style={styles.buttonText}>{t("auth.login.submit")}</Text>
             )}
           </TouchableOpacity>
 
@@ -132,7 +133,7 @@ export default function LoginScreen({ navigation }) {
             onPress={() => navigation.navigate("ForgotPassword")}
             disabled={loading}
           >
-            <Text style={styles.link}>نسيتي كلمة السر؟</Text>
+            <Text style={styles.link}>{t("auth.login.forgot_link")}</Text>
           </TouchableOpacity>
 
           <TouchableOpacity
@@ -140,15 +141,17 @@ export default function LoginScreen({ navigation }) {
             onPress={() => navigation.navigate("Register")}
             disabled={loading}
           >
-            <Text style={styles.linkMuted}>ما عندكش حساب؟ </Text>
-            <Text style={styles.link}>إنشاء حساب جديد</Text>
+            <Text style={styles.linkMuted}>{t("auth.login.no_account")}</Text>
+            <Text style={styles.link}>{t("auth.login.create_link")}</Text>
           </TouchableOpacity>
 
           <TouchableOpacity
             onPress={() => navigation.navigate("Presentation")}
             disabled={loading}
           >
-            <Text style={styles.linkSecondary}>شوف شنو كاين فـ FLOUSI</Text>
+            <Text style={styles.linkSecondary}>
+              {t("auth.login.presentation_link")}
+            </Text>
           </TouchableOpacity>
         </ScrollView>
       </KeyboardAvoidingView>

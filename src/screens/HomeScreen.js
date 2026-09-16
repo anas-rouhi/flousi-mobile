@@ -27,7 +27,10 @@ import { useAuth } from "../context/AuthContext";
 import { useAccounts } from "../hooks/useAccounts";
 import { useBudget } from "../hooks/useBudget";
 import { describeApiError, isRetryableError } from "../services/api";
+import { primeCategoryCatalog } from "../services/categories";
 import { fetchDashboardStats } from "../services/stats";
+import { useI18n } from "../i18n";
+import { isolate } from "../utils/bidi";
 import { centimesOf } from "../utils/money";
 
 /** "Anas Rouhi" => "Anas" — the greeting stays short on narrow screens. */
@@ -47,6 +50,7 @@ export default function HomeScreen() {
   const { colors } = useTheme();
   const styles = useThemedStyles(createStyles);
   const { user, signOut } = useAuth();
+  const { t } = useI18n();
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -86,7 +90,13 @@ export default function HomeScreen() {
   const load = useCallback(async ({ allowRetry = true } = {}) => {
     try {
       setError(null);
-      setStats(await fetchDashboardStats());
+      // The breakdown rows name categories by id only; the catalogue (loaded
+      // once, never failing) lets them render in the UI language on arrival.
+      const [nextStats] = await Promise.all([
+        fetchDashboardStats(),
+        primeCategoryCatalog(),
+      ]);
+      setStats(nextStats);
     } catch (err) {
       if (allowRetry && isRetryableError(err)) {
         console.log("Dashboard stats timed out, retrying once…");
@@ -149,22 +159,26 @@ export default function HomeScreen() {
   const handleTransactionCreated = useCallback(
     (created) => {
       showToast(
-        created?.type === "income" ? "تزاد المدخول ✓" : "تزاد المصروف ✓",
+        created?.type === "income"
+          ? t("home.toast_income_added")
+          : t("home.toast_expense_added"),
       );
       load();
       reloadAccounts();
     },
-    [load, showToast, reloadAccounts],
+    [load, showToast, reloadAccounts, t],
   );
 
   const handleAccountCreated = useCallback(
     (created) => {
-      showToast(`تزاد الحساب «${created?.name || ""}» ✓`);
+      showToast(
+        t("home.toast_account_added", { name: isolate(created?.name || "") }),
+      );
       reloadAccounts();
       // The balance headline counts accounts, so the stats need refreshing too.
       load();
     },
-    [load, showToast, reloadAccounts],
+    [load, showToast, reloadAccounts, t],
   );
 
   /**
@@ -176,11 +190,11 @@ export default function HomeScreen() {
       const saved = await budget.save({ limitCentimes });
       if (saved) {
         setBudgetSheetVisible(false);
-        showToast("تحدّدت الميزانية ✓");
+        showToast(t("home.toast_budget_set"));
       }
       return saved;
     },
-    [budget, showToast],
+    [budget, showToast, t],
   );
 
   /**
@@ -188,10 +202,10 @@ export default function HomeScreen() {
    * this screen — so there is no navigation to do here.
    */
   const confirmSignOut = useCallback(() => {
-    Alert.alert("تسجيل الخروج", "واش بصح بغيت تخرج من حسابك؟", [
-      { text: "لا، بقا", style: "cancel" },
+    Alert.alert(t("session.sign_out"), t("session.sign_out_confirm"), [
+      { text: t("session.sign_out_cancel"), style: "cancel" },
       {
-        text: "خرج",
+        text: t("session.sign_out_action"),
         style: "destructive",
         onPress: async () => {
           setSigningOut(true);
@@ -200,12 +214,12 @@ export default function HomeScreen() {
           } catch (err) {
             console.log("Sign out failed:", err.message);
             setSigningOut(false);
-            Alert.alert("خطأ", "ما قدرناش نخرجوك، عاود المحاولة");
+            Alert.alert(t("common.error_title"), t("session.sign_out_failed"));
           }
         },
       },
     ]);
-  }, [signOut]);
+  }, [signOut, t]);
 
   const greeting = firstName(user);
 
@@ -213,9 +227,11 @@ export default function HomeScreen() {
     <View style={styles.header}>
       <View style={styles.headerText}>
         <Text style={styles.greeting}>
-          {greeting ? `أهلاً، ${greeting} 👋` : "مرحبا بيك 👋"}
+          {greeting
+            ? t("home.greeting", { name: isolate(greeting) })
+            : t("home.greeting_anonymous")}
         </Text>
-        <Text style={styles.greetingSub}>هاد نظرة على فلوسك</Text>
+        <Text style={styles.greetingSub}>{t("home.greeting_sub")}</Text>
       </View>
       <TouchableOpacity
         style={styles.logoutButton}
@@ -226,7 +242,7 @@ export default function HomeScreen() {
         {signingOut ? (
           <ActivityIndicator size="small" color={colors.dangerText} />
         ) : (
-          <Text style={styles.logoutText}>تسجيل الخروج</Text>
+          <Text style={styles.logoutText}>{t("session.sign_out")}</Text>
         )}
       </TouchableOpacity>
     </View>
@@ -252,7 +268,7 @@ export default function HomeScreen() {
         <View style={styles.center}>
           <Text style={styles.errorTitle}>{error}</Text>
           <TouchableOpacity style={styles.retryButton} onPress={() => load()}>
-            <Text style={styles.retryText}>عاود المحاولة</Text>
+            <Text style={styles.retryText}>{t("common.retry")}</Text>
           </TouchableOpacity>
         </View>
       </SafeAreaView>

@@ -14,6 +14,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { useTheme, useThemedStyles } from "../context/ThemeContext";
 import { isRetryableError, describeApiError } from "../services/api";
 import { requestPasswordReset } from "../services/password";
+import { useI18n } from "../i18n";
 
 /**
  * Asks for an email and nothing else.
@@ -26,6 +27,7 @@ import { requestPasswordReset } from "../services/password";
 export default function ForgotPasswordScreen({ navigation }) {
   const { colors } = useTheme();
   const styles = useThemedStyles(createStyles);
+  const { t } = useI18n();
 
   const [email, setEmail] = useState("");
   const [error, setError] = useState(null);
@@ -51,7 +53,7 @@ export default function ForgotPasswordScreen({ navigation }) {
 
     const address = email.trim();
     if (!address) {
-      setError("عفاك دخل الإيميل ديالك");
+      setError(t("validation.email_required_own"));
       return;
     }
 
@@ -67,7 +69,7 @@ export default function ForgotPasswordScreen({ navigation }) {
       if (mountedRef.current) {
         setError(
           isRetryableError(err)
-            ? "الاتصال طوّل بزاف، عاود المحاولة"
+            ? t("auth.errors.timeout")
             : describeApiError(err),
         );
       }
@@ -86,21 +88,18 @@ export default function ForgotPasswordScreen({ navigation }) {
           <View style={styles.badge}>
             <Text style={styles.badgeMark}>✉</Text>
           </View>
-          <Text style={styles.title}>شوف الإيميل ديالك</Text>
-          <Text style={styles.body}>
-            إيلا كان هاد الإيميل مسجل عندنا، غادي توصلك رسالة فيها رابط باش
-            تبدل كلمة السر. الرابط كيخدم ساعة وحدة.
-          </Text>
-          <Text style={styles.hint}>
-            ما لقيتيش الرسالة؟ شوف فـ Spam قبل ما تعاود الطلب.
-          </Text>
+          <Text style={styles.title}>{t("auth.forgot.sent_title")}</Text>
+          <Text style={styles.body}>{t("auth.forgot.sent_body")}</Text>
+          <Text style={styles.hint}>{t("auth.forgot.sent_hint")}</Text>
 
           <TouchableOpacity
             style={styles.button}
             onPress={() => navigation.navigate("Login")}
             activeOpacity={0.85}
           >
-            <Text style={styles.buttonText}>رجع للدخول</Text>
+            <Text style={styles.buttonText}>
+              {t("auth.forgot.back_to_login")}
+            </Text>
           </TouchableOpacity>
         </ScrollView>
       </SafeAreaView>
@@ -118,14 +117,12 @@ export default function ForgotPasswordScreen({ navigation }) {
           keyboardShouldPersistTaps="handled"
         >
           <Text style={styles.brand}>FLOUSI</Text>
-          <Text style={styles.title}>نسيتي كلمة السر؟</Text>
-          <Text style={styles.subtitle}>
-            دخل الإيميل ديالك ونصيفطو ليك رابط باش تبدلها
-          </Text>
+          <Text style={styles.title}>{t("auth.forgot.title")}</Text>
+          <Text style={styles.subtitle}>{t("auth.forgot.subtitle")}</Text>
 
           {error ? <Text style={styles.error}>{error}</Text> : null}
 
-          <Text style={styles.label}>الإيميل</Text>
+          <Text style={styles.label}>{t("auth.email")}</Text>
           <TextInput
             style={styles.input}
             placeholder="you@example.com"
@@ -149,7 +146,7 @@ export default function ForgotPasswordScreen({ navigation }) {
             {loading ? (
               <ActivityIndicator color={colors.onPrimary} />
             ) : (
-              <Text style={styles.buttonText}>صيفط الرابط</Text>
+              <Text style={styles.buttonText}>{t("auth.forgot.submit")}</Text>
             )}
           </TouchableOpacity>
 
@@ -158,7 +155,7 @@ export default function ForgotPasswordScreen({ navigation }) {
             onPress={() => navigation.goBack()}
             disabled={loading}
           >
-            <Text style={styles.link}>رجع للدخول</Text>
+            <Text style={styles.link}>{t("auth.forgot.back_to_login")}</Text>
           </TouchableOpacity>
         </ScrollView>
       </KeyboardAvoidingView>

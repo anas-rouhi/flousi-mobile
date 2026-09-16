@@ -4,6 +4,9 @@ import { Card, CardHeader } from "../ui/Card";
 import { categoryGlyph } from "../../constants/categoryIcons";
 import { fontSizes, spacing } from "../../constants/theme";
 import { useTheme, useThemedStyles } from "../../context/ThemeContext";
+import { useI18n } from "../../i18n";
+import { joinMeta, ltr } from "../../utils/bidi";
+import { categoryName } from "../../utils/categories";
 import { formatMoney } from "../../utils/money";
 
 const TOP_CATEGORIES = 5;
@@ -11,18 +14,21 @@ const TOP_CATEGORIES = 5;
 /** Where the month's expenses went, largest first. */
 export default function CategoryBreakdownCard({ categories = [], currency }) {
   const styles = useThemedStyles(createStyles);
+  const { t } = useI18n();
   const [showAll, setShowAll] = useState(false);
   const visible = showAll ? categories : categories.slice(0, TOP_CATEGORIES);
 
   return (
     <Card>
       <CardHeader
-        title="المصاريف حسب الفئة"
+        title={t("home.categories.title")}
         meta={
           categories.length > TOP_CATEGORIES ? (
             <TouchableOpacity onPress={() => setShowAll((shown) => !shown)}>
               <Text style={styles.link}>
-                {showAll ? "أقل" : `الكل (${categories.length})`}
+                {showAll
+                  ? t("home.categories.less")
+                  : t("home.categories.all", { count: categories.length })}
               </Text>
             </TouchableOpacity>
           ) : null
@@ -30,7 +36,7 @@ export default function CategoryBreakdownCard({ categories = [], currency }) {
       />
 
       {categories.length === 0 ? (
-        <Text style={styles.empty}>ما كاينش مصاريف هذا الشهر</Text>
+        <Text style={styles.empty}>{t("home.categories.empty")}</Text>
       ) : (
         visible.map((category) => (
           <CategoryRow
@@ -47,6 +53,7 @@ export default function CategoryBreakdownCard({ categories = [], currency }) {
 function CategoryRow({ category, currency }) {
   const { colors } = useTheme();
   const styles = useThemedStyles(createStyles);
+  const { t } = useI18n();
   // `percentage` is computed server-side against the month's total expenses.
   const share = Number.isFinite(category.percentage) ? category.percentage : 0;
   const color = category.color || colors.textMuted;
@@ -57,7 +64,7 @@ function CategoryRow({ category, currency }) {
         <View style={styles.identity}>
           <Text style={styles.glyph}>{categoryGlyph(category.icon)}</Text>
           <Text style={styles.name} numberOfLines={1}>
-            {category.name}
+            {categoryName(category, category.category_id)}
           </Text>
         </View>
         <Text style={styles.amount}>{formatMoney(category, currency)}</Text>
@@ -73,7 +80,12 @@ function CategoryRow({ category, currency }) {
       </View>
 
       <Text style={styles.meta}>
-        {share}% • {category.transactions_count} معاملة
+        {joinMeta([
+          ltr(`${share}%`),
+          t("common.transactions_count", {
+            count: category.transactions_count ?? 0,
+          }),
+        ])}
       </Text>
     </View>
   );

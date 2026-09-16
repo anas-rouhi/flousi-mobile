@@ -14,15 +14,14 @@ import { fontSizes, radii, spacing } from "../constants/theme";
 import { useTheme, useThemedStyles } from "../context/ThemeContext";
 import { useAuth } from "../context/AuthContext";
 import { useLocale } from "../context/LocaleContext";
+import { useI18n } from "../i18n";
 
 /** System / Light / Dark, in the order people expect to scan them. */
 const THEME_OPTIONS = [
-  { value: "system", glyph: "⚙️", label: "النظام" },
-  { value: "light", glyph: "☀️", label: "فاتح" },
-  { value: "dark", glyph: "🌙", label: "غامق" },
+  { value: "system", glyph: "⚙️" },
+  { value: "light", glyph: "☀️" },
+  { value: "dark", glyph: "🌙" },
 ];
-
-const LANGUAGE_NAMES = { ar: "العربية / الدارجة", fr: "Français", en: "English" };
 
 /**
  * Three of the rows here are read-only on purpose.
@@ -36,22 +35,22 @@ export default function SettingsScreen() {
   const { colors, mode, scheme, setMode } = useTheme();
   const styles = useThemedStyles(createStyles);
   const { user, signOut } = useAuth();
-  const { language, languages, setLanguage, restart } = useLocale();
+  const { setLanguage } = useLocale();
+  const { t, language, languages } = useI18n();
   const [signingOut, setSigningOut] = useState(false);
 
-  const notAvailable = useCallback((what) => {
-    Alert.alert(
-      what,
-      "هاد الخيار مامفعّلش حتى دابا — كيتطلب تحديث فـ السيرفر.",
-      [{ text: "واخا" }],
-    );
-  }, []);
+  const notAvailable = useCallback(
+    (what) => {
+      Alert.alert(what, t("common.not_available"), [{ text: t("common.ok") }]);
+    },
+    [t],
+  );
 
   const confirmSignOut = useCallback(() => {
-    Alert.alert("تسجيل الخروج", "واش بصح بغيت تخرج من حسابك؟", [
-      { text: "لا، بقا", style: "cancel" },
+    Alert.alert(t("session.sign_out"), t("session.sign_out_confirm"), [
+      { text: t("session.sign_out_cancel"), style: "cancel" },
       {
-        text: "خرج",
+        text: t("session.sign_out_action"),
         style: "destructive",
         onPress: async () => {
           setSigningOut(true);
@@ -60,52 +59,31 @@ export default function SettingsScreen() {
           } catch (err) {
             console.log("Sign out failed:", err.message);
             setSigningOut(false);
-            Alert.alert("خطأ", "ما قدرناش نخرجوك، عاود المحاولة");
+            Alert.alert(t("common.error_title"), t("session.sign_out_failed"));
           }
         },
       },
     ]);
-  }, [signOut]);
+  }, [signOut, t]);
 
   /**
-   * React Native latches layout direction at startup, so a language change
-   * cannot flip the screen live. The restart is therefore asked for, never
-   * performed behind the user back.
+   * Language changes apply instantly — direction is a root-view style, not a
+   * native latch, and the translation store is switched by the provider — so
+   * the picker has no restart to ask for.
    */
   const chooseLanguage = useCallback(
     async (option) => {
-      const result = await setLanguage(option.value);
-      if (!result.changed || !result.needsRestart) {
-        return;
-      }
-      Alert.alert(
-        "تبديل اللغة",
-        `باش تبان ${option.label} بالاتجاه الصحيح، خاص التطبيق يتعاود يتشغل. تعاود دابا؟`,
-        [
-          { text: "من بعد", style: "cancel" },
-          {
-            text: "عاود شغّل",
-            onPress: () => {
-              if (!restart()) {
-                Alert.alert(
-                  "عاود شغّل التطبيق",
-                  "سد التطبيق وحلو من جديد باش يتطبق الاتجاه الجديد.",
-                );
-              }
-            },
-          },
-        ],
-      );
+      await setLanguage(option.value);
     },
-    [setLanguage, restart],
+    [setLanguage],
   );
 
-  const initial = user?.name?.trim()?.[0]?.toUpperCase() || "؟";
+  const initial = user?.name?.trim()?.[0]?.toUpperCase() || "?";
 
   return (
     <SafeAreaView style={styles.screen} edges={["top"]}>
       <View style={styles.header}>
-        <Text style={styles.title}>الإعدادات</Text>
+        <Text style={styles.title}>{t("settings.title")}</Text>
       </View>
 
       <ScrollView contentContainerStyle={styles.content}>
@@ -128,7 +106,7 @@ export default function SettingsScreen() {
 
         {/* Preferences — values are live, editing is not */}
         <Card>
-          <CardHeader title="التفضيلات" />
+          <CardHeader title={t("settings.preferences")} />
           <View style={styles.languages}>
             {languages.map((option) => {
               const active = option.value === language;
@@ -153,12 +131,14 @@ export default function SettingsScreen() {
               );
             })}
           </View>
-          <Text style={styles.modeHint}>
-            تبديل اللغة كيتطلب إعادة تشغيل التطبيق باش يتبدل اتجاه الشاشة.
-          </Text>
-          <Row label="العملة" value={user?.preferred_currency || "—"} readOnly />
+          <Text style={styles.modeHint}>{t("settings.language_hint")}</Text>
           <Row
-            label="المنطقة الزمنية"
+            label={t("settings.currency")}
+            value={user?.preferred_currency || "—"}
+            readOnly
+          />
+          <Row
+            label={t("settings.timezone")}
             value={user?.timezone || "—"}
             readOnly
             isLast
@@ -167,7 +147,7 @@ export default function SettingsScreen() {
 
         {/* Appearance — this one is fully live */}
         <Card>
-          <CardHeader title="المظهر" />
+          <CardHeader title={t("settings.appearance")} />
           <View style={styles.modes}>
             {THEME_OPTIONS.map((option) => {
               const active = option.value === mode;
@@ -184,7 +164,7 @@ export default function SettingsScreen() {
                   <Text
                     style={[styles.modeLabel, active && styles.modeLabelActive]}
                   >
-                    {option.label}
+                    {t(`settings.theme.${option.value}`)}
                   </Text>
                 </TouchableOpacity>
               );
@@ -192,14 +172,16 @@ export default function SettingsScreen() {
           </View>
           <Text style={styles.modeHint}>
             {mode === "system"
-              ? `كيتبع الجهاز — دابا ${scheme === "dark" ? "غامق" : "فاتح"}`
-              : "محدد يدويا"}
+              ? t("settings.theme_follows", {
+                  scheme: t(`settings.theme.${scheme === "dark" ? "dark" : "light"}`),
+                })
+              : t("settings.theme_manual")}
           </Text>
         </Card>
 
         {/* Account */}
         <Card>
-          <CardHeader title="الحساب" />
+          <CardHeader title={t("settings.account")} />
           <TouchableOpacity
             style={styles.action}
             onPress={confirmSignOut}
@@ -208,15 +190,17 @@ export default function SettingsScreen() {
             {signingOut ? (
               <ActivityIndicator size="small" color={colors.dangerText} />
             ) : (
-              <Text style={styles.actionText}>تسجيل الخروج</Text>
+              <Text style={styles.actionText}>{t("session.sign_out")}</Text>
             )}
           </TouchableOpacity>
 
           <TouchableOpacity
             style={[styles.action, styles.actionDanger]}
-            onPress={() => notAvailable("حذف الحساب")}
+            onPress={() => notAvailable(t("settings.delete_account"))}
           >
-            <Text style={styles.actionDangerText}>حذف الحساب</Text>
+            <Text style={styles.actionDangerText}>
+              {t("settings.delete_account")}
+            </Text>
           </TouchableOpacity>
         </Card>
 

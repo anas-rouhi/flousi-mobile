@@ -7,6 +7,8 @@ import React, {
   useRef,
   useState,
 } from "react";
+import { Alert } from "react-native";
+import { t } from "../i18n/store";
 import {
   clearSession,
   fetchMe,
@@ -107,12 +109,27 @@ export function AuthProvider({ children }) {
    * navigator's screen set is derived from `isAuthenticated`, so the dashboard
    * unmounts and Login takes its place.
    */
+  const tokenRef = useRef(null);
+  useEffect(() => {
+    tokenRef.current = token;
+  }, [token]);
+
   useEffect(() => {
     return onUnauthorized(async ({ url } = {}) => {
       console.log("Token rejected by", url || "the API", "- signing out.");
+      // Several requests can fail on the same dead token at once; only the
+      // first one, while a session is still held, tells the user why they
+      // were sent back to Login.
+      const hadSession = Boolean(tokenRef.current);
+      tokenRef.current = null;
       await clearSession();
       setToken(null);
       setUser(null);
+      if (hadSession) {
+        Alert.alert(t("session.expired_title"), t("session.expired_body"), [
+          { text: t("common.ok") },
+        ]);
+      }
     });
   }, []);
 

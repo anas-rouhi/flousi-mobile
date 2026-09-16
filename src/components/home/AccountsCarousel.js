@@ -10,15 +10,11 @@ import {
 import { Card, CardHeader, CardHeaderMeta } from "../ui/Card";
 import { fontSizes, radii, spacing } from "../../constants/theme";
 import { useTheme, useThemedStyles } from "../../context/ThemeContext";
+import { useI18n } from "../../i18n";
+import { ltr } from "../../utils/bidi";
 
-/** Arabic label per account type, matching the API's enum. */
-const TYPE_LABELS = {
-  cash: "كاش",
-  bank: "بنك",
-  credit_card: "بطاقة",
-  savings: "توفير",
-  other: "أخرى",
-};
+/** Account types with a label under `accounts.types`, matching the API's enum. */
+const KNOWN_TYPES = ["cash", "bank", "credit_card", "savings", "other"];
 
 /**
  * Horizontal strip of the user's accounts with their balances, ending in an
@@ -36,13 +32,16 @@ export default function AccountsCarousel({
 }) {
   const { colors } = useTheme();
   const styles = useThemedStyles(createStyles);
+  const { t } = useI18n();
   return (
     <Card>
       <CardHeader
-        title="الحسابات"
+        title={t("accounts.title")}
         meta={
           accounts.length ? (
-            <CardHeaderMeta>{accounts.length} حساب</CardHeaderMeta>
+            <CardHeaderMeta>
+              {t("common.accounts_count", { count: accounts.length })}
+            </CardHeaderMeta>
           ) : null
         }
       />
@@ -72,14 +71,18 @@ export default function AccountsCarousel({
                 <View style={styles.tileTop}>
                   <View style={[styles.dot, { backgroundColor: accent }]} />
                   <Text style={styles.tileType}>
-                    {TYPE_LABELS[account.type] || TYPE_LABELS.other}
+                    {t(
+                      `accounts.types.${
+                        KNOWN_TYPES.includes(account.type) ? account.type : "other"
+                      }`,
+                    )}
                   </Text>
                 </View>
                 <Text style={styles.tileName} numberOfLines={1}>
                   {account.name}
                 </Text>
                 <Text style={styles.tileBalance} numberOfLines={1}>
-                  {account.balance_formatted}
+                  {ltr(account.balance_formatted)}
                 </Text>
               </TouchableOpacity>
             );
@@ -91,10 +94,10 @@ export default function AccountsCarousel({
             onPress={onAddAccount}
             activeOpacity={0.8}
             accessibilityRole="button"
-            accessibilityLabel="زيد حساب جديد"
+            accessibilityLabel={t("accounts.add_a11y")}
           >
             <Text style={styles.addIcon}>＋</Text>
-            <Text style={styles.addLabel}>زيد حساب</Text>
+            <Text style={styles.addLabel}>{t("accounts.add")}</Text>
           </TouchableOpacity>
         </ScrollView>
       )}

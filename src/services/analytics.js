@@ -29,8 +29,9 @@ import api from "./api";
  * with a sibling `*_formatted` string, not a nested `{ amount, … }` object. And
  * category rows key on `id` / `spent`, not `category_id` / `amount`.
  *
- * `period.label` already arrives localised ("شتنبر 2026"), so the month
- * switcher displays it rather than rebuilding the name on the client.
+ * `period.label` arrives localised ("شتنبر 2026") — but in the *account's*
+ * language, which need not match the UI's, so the month switcher builds its
+ * label on the client with Intl instead.
  *
  * `daily_trend` covers every day of the month, including empty ones, so a chart
  * can plot a full axis without filling gaps itself.

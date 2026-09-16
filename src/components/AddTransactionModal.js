@@ -12,8 +12,11 @@ import {
   Platform,
 } from "react-native";
 import { describeApiError, describeValidationError } from "../services/api";
+import { useAuth } from "../context/AuthContext";
 import { useTheme, useThemedStyles } from "../context/ThemeContext";
 import { useAccounts } from "../hooks/useAccounts";
+import { useI18n } from "../i18n";
+import { defaultCashAccountName } from "../services/accounts";
 import { fetchCategories } from "../services/categories";
 import { createTransaction } from "../services/transactions";
 import { formatLocalDay } from "../utils/date";
@@ -23,8 +26,9 @@ import {
   formatCentimes,
   sanitizeAmountInput,
 } from "../utils/money";
+import { ltr } from "../utils/bidi";
+import { categoryName } from "../utils/categories";
 import { fixedLtrRow } from "../utils/rtl";
-
 
 /** Local midnight-anchored day key, for comparing calendar days safely. */
 function dayKey(date) {
@@ -60,6 +64,8 @@ function toTransactionDate(day) {
 export default function AddTransactionModal({ visible, onClose, onCreated }) {
   const { colors } = useTheme();
   const styles = useThemedStyles(createStyles);
+  const { t } = useI18n();
+  const { user } = useAuth();
   const [type, setType] = useState("expense");
   const [amount, setAmount] = useState("");
   const [categoryId, setCategoryId] = useState(null);
@@ -149,17 +155,20 @@ export default function AddTransactionModal({ visible, onClose, onCreated }) {
   const centimes = amountToCentimes(amount);
   const isToday = dayKey(day) === dayKey(startOfToday());
   const accent = type === "expense" ? colors.expense : colors.income;
+  // The wallet is named in the account's language — that is what the server
+  // would call it — so the button promises the name that will actually appear.
+  const walletName = defaultCashAccountName(user?.preferred_language);
 
   /** Blocking problems, in the order the user would fix them. */
   const validate = () => {
     if (centimes <= 0) {
-      return "دخل مبلغ صحيح أكبر من صفر";
+      return t("validation.amount_positive");
     }
     if (!accountId) {
-      return "ختار الحساب";
+      return t("validation.account_required");
     }
     if (!categoryId) {
-      return "ختار الفئة";
+      return t("validation.category_required");
     }
     return null;
   };
@@ -210,9 +219,11 @@ export default function AddTransactionModal({ visible, onClose, onCreated }) {
             {/* Handle + header */}
             <View style={styles.grabber} />
             <View style={styles.header}>
-              <Text style={styles.headerTitle}>معاملة جديدة</Text>
+              <Text style={styles.headerTitle}>
+                {t("add_transaction.title")}
+              </Text>
               <TouchableOpacity onPress={onClose} hitSlop={12}>
-                <Text style={styles.close}>إلغاء</Text>
+                <Text style={styles.close}>{t("common.cancel")}</Text>
               </TouchableOpacity>
             </View>
 
@@ -223,13 +234,13 @@ export default function AddTransactionModal({ visible, onClose, onCreated }) {
               {/* Expense / Income segmented control */}
               <View style={styles.segment}>
                 <SegmentButton
-                  label="مصروف"
+                  label={t("add_transaction.types.expense")}
                   active={type === "expense"}
                   activeColor={colors.expense}
                   onPress={() => setType("expense")}
                 />
                 <SegmentButton
-                  label="مدخول"
+                  label={t("add_transaction.types.income")}
                   active={type === "income"}
                   activeColor={colors.income}
                   onPress={() => setType("income")}
@@ -262,7 +273,7 @@ export default function AddTransactionModal({ visible, onClose, onCreated }) {
                     {lookupError || accountError}
                   </Text>
                   <TouchableOpacity onPress={retryLookups}>
-                    <Text style={styles.lookupRetry}>عاود المحاولة</Text>
+                    <Text style={styles.lookupRetry}>{t("common.retry")}</Text>
                   </TouchableOpacity>
                 </View>
               ) : null}
@@ -276,13 +287,13 @@ export default function AddTransactionModal({ visible, onClose, onCreated }) {
               ) : null}
 
               {/* Account selector */}
-              <Text style={styles.label}>الحساب</Text>
+              <Text style={styles.label}>{t("add_transaction.account")}</Text>
               {noAccounts ? (
                 // A user with no wallet used to be stuck here with nothing to
                 // tap. One press creates the starter cash account and selects it.
                 <View style={styles.noAccount}>
                   <Text style={styles.noAccountText}>
-                    ما عندكش حتى محفظة. صاوب محفظة «كاش» ودخل معاملتك دابا.
+                    {t("add_transaction.no_wallet", { name: walletName })}
                   </Text>
                   <TouchableOpacity
                     style={styles.noAccountButton}
@@ -294,7 +305,7 @@ export default function AddTransactionModal({ visible, onClose, onCreated }) {
                       <ActivityIndicator color={colors.onPrimary} size="small" />
                     ) : (
                       <Text style={styles.noAccountButtonText}>
-                        صاوب محفظة «كاش»
+                        {t("add_transaction.create_wallet", { name: walletName })}
                       </Text>
                     )}
                   </TouchableOpacity>
@@ -309,7 +320,7 @@ export default function AddTransactionModal({ visible, onClose, onCreated }) {
                     <Chip
                       key={account.id}
                       label={account.name}
-                      meta={account.balance_formatted}
+                      meta={ltr(account.balance_formatted)}
                       active={account.id === accountId}
                       activeColor={account.color || colors.primary}
                       onPress={() => setAccountId(account.id)}
@@ -319,9 +330,11 @@ export default function AddTransactionModal({ visible, onClose, onCreated }) {
               )}
 
               {/* Category selector */}
-              <Text style={styles.label}>الفئة</Text>
+              <Text style={styles.label}>{t("add_transaction.category")}</Text>
               {typeCategories.length === 0 && !loadingLookups ? (
-                <Text style={styles.emptyHint}>ما كايناش فئات لهاد النوع</Text>
+                <Text style={styles.emptyHint}>
+                  {t("add_transaction.no_categories")}
+                </Text>
               ) : (
                 <View style={styles.categoryGrid}>
                   {typeCategories.map((category) => (
@@ -336,19 +349,19 @@ export default function AddTransactionModal({ visible, onClose, onCreated }) {
               )}
 
               {/* Description */}
-              <Text style={styles.label}>الوصف (اختياري)</Text>
+              <Text style={styles.label}>{t("add_transaction.description")}</Text>
               <TextInput
                 style={styles.input}
                 value={description}
                 onChangeText={setDescription}
-                placeholder="مثلا: طاكسي لـ گليز"
+                placeholder={t("add_transaction.description_placeholder")}
                 placeholderTextColor={colors.textFaint}
                 maxLength={1000}
                 editable={!submitting}
               />
 
               {/* Date — quick picks plus a day stepper, clamped to today. */}
-              <Text style={styles.label}>التاريخ</Text>
+              <Text style={styles.label}>{t("add_transaction.date")}</Text>
               <View style={styles.dateRow}>
                 <TouchableOpacity
                   style={[styles.datePick, isToday && styles.datePickActive]}
@@ -360,7 +373,7 @@ export default function AddTransactionModal({ visible, onClose, onCreated }) {
                       isToday && styles.datePickTextActive,
                     ]}
                   >
-                    اليوم
+                    {t("common.today")}
                   </Text>
                 </TouchableOpacity>
 
@@ -406,7 +419,9 @@ export default function AddTransactionModal({ visible, onClose, onCreated }) {
                   <ActivityIndicator color={colors.onPrimary} />
                 ) : (
                   <Text style={styles.submitText}>
-                    {type === "expense" ? "زيد المصروف" : "زيد المدخول"}
+                    {type === "expense"
+                      ? t("add_transaction.submit_expense")
+                      : t("add_transaction.submit_income")}
                   </Text>
                 )}
               </TouchableOpacity>
@@ -461,6 +476,8 @@ function Chip({ label, meta, active, activeColor, onPress }) {
 function CategoryTile({ category, active, onPress }) {
   const { colors } = useTheme();
   const styles = useThemedStyles(createStyles);
+  // Subscribes the tile to language changes, so its name re-resolves.
+  useI18n();
   const color = category.color || colors.textMuted;
   return (
     <TouchableOpacity
@@ -476,7 +493,7 @@ function CategoryTile({ category, active, onPress }) {
         style={[styles.categoryName, active && { color, fontWeight: "bold" }]}
         numberOfLines={1}
       >
-        {category.name}
+        {categoryName(category)}
       </Text>
     </TouchableOpacity>
   );

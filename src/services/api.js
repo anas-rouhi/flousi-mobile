@@ -1,6 +1,7 @@
 import axios from "axios";
 import { NativeModules } from "react-native";
 import * as SecureStore from "expo-secure-store";
+import { getLanguage, t } from "../i18n/store";
 import { emitUnauthorized } from "./sessionEvents";
 
 /**
@@ -76,6 +77,9 @@ api.interceptors.request.use(
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
+    // Lets a locale-aware backend answer (validation messages, category names)
+    // in the language the UI is showing; ignored by one that is not.
+    config.headers["Accept-Language"] = getLanguage();
     return config;
   },
   (error) => {
@@ -146,18 +150,29 @@ export function describeValidationError(error) {
   return describeApiError(error);
 }
 
-/** Arabic message for whatever went wrong, for use in screen error states. */
+/**
+ * Message in the active language for whatever went wrong, for use in screen
+ * error states.
+ *
+ * Only failures the client can name are translated. A message the server wrote
+ * is shown in its original text: it is specific ("The email has already been
+ * taken"), and replacing it with a generic line would hide what to fix.
+ */
 export function describeApiError(error) {
   if (error?.response?.status === 401) {
-    return "انتهت الجلسة، عاود دخول من فضلك";
+    return t("session.token_expired");
   }
   if (error?.response?.data?.message) {
     return error.response.data.message;
   }
   if (error?.code === "ECONNABORTED") {
-    return "الطلب خذا وقت طويل، عاود المحاولة";
+    return t("session.timeout");
   }
-  return "ما قدرناش نوصلو للسيرفر، تحقق من الاتصال";
+  if (error?.response) {
+    // The server answered, but without a message to pass through.
+    return t("common.error_generic");
+  }
+  return t("session.network");
 }
 
 export default api;

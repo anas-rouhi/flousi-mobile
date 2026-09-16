@@ -15,6 +15,7 @@ import { useTheme, useThemedStyles } from "../context/ThemeContext";
 import { isRetryableError } from "../services/api";
 import { useAuth } from "../context/AuthContext";
 import { describeAuthError } from "../services/auth";
+import { useI18n } from "../i18n";
 
 // Mirrors the API's `min:8` rule so the user is told before a round trip.
 const MIN_PASSWORD_LENGTH = 8;
@@ -23,6 +24,7 @@ export default function RegisterScreen({ navigation }) {
   const { colors } = useTheme();
   const styles = useThemedStyles(createStyles);
   const { signUp } = useAuth();
+  const { t } = useI18n();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -47,16 +49,16 @@ export default function RegisterScreen({ navigation }) {
   /** Local checks only; the API remains the authority on uniqueness etc. */
   const validate = () => {
     if (!name.trim()) {
-      return "عفاك دخل السمية";
+      return t("validation.name_required");
     }
     if (!email.trim()) {
-      return "عفاك دخل الإيميل";
+      return t("validation.email_required");
     }
     if (password.length < MIN_PASSWORD_LENGTH) {
-      return `كلمة السر خاصها ${MIN_PASSWORD_LENGTH} حروف على الأقل`;
+      return t("validation.password_min", { min: MIN_PASSWORD_LENGTH });
     }
     if (password !== confirmation) {
-      return "كلمتين السر ماشي بحال بحال";
+      return t("validation.passwords_mismatch");
     }
     return null;
   };
@@ -91,7 +93,7 @@ export default function RegisterScreen({ navigation }) {
         // inviting a resubmit that would fail on the unique email rule.
         setError(
           isRetryableError(err)
-            ? "الاتصال طوّل بزاف. إلا تكرا الحساب، جرب تسجل الدخول."
+            ? t("auth.errors.register_timeout")
             : describeAuthError(err),
         );
       }
@@ -116,15 +118,15 @@ export default function RegisterScreen({ navigation }) {
           keyboardShouldPersistTaps="handled"
         >
           <Text style={styles.brand}>FLOUSI</Text>
-          <Text style={styles.title}>إنشاء حساب جديد</Text>
-          <Text style={styles.subtitle}>بدا تتبع فلوسك فـ دقيقة</Text>
+          <Text style={styles.title}>{t("auth.register.title")}</Text>
+          <Text style={styles.subtitle}>{t("auth.register.subtitle")}</Text>
 
           {error ? <Text style={styles.error}>{error}</Text> : null}
 
-          <Text style={styles.label}>السمية</Text>
+          <Text style={styles.label}>{t("auth.register.name")}</Text>
           <TextInput
             style={styles.input}
-            placeholder="الاسم الكامل"
+            placeholder={t("auth.register.name_placeholder")}
             placeholderTextColor={colors.textFaint}
             value={name}
             onChangeText={setName}
@@ -133,7 +135,7 @@ export default function RegisterScreen({ navigation }) {
             editable={!loading}
           />
 
-          <Text style={styles.label}>الإيميل</Text>
+          <Text style={styles.label}>{t("auth.email")}</Text>
           <TextInput
             style={styles.input}
             placeholder="you@example.com"
@@ -146,10 +148,12 @@ export default function RegisterScreen({ navigation }) {
             editable={!loading}
           />
 
-          <Text style={styles.label}>كلمة السر</Text>
+          <Text style={styles.label}>{t("auth.password")}</Text>
           <TextInput
             style={styles.input}
-            placeholder={`${MIN_PASSWORD_LENGTH} حروف على الأقل`}
+            placeholder={t("validation.password_min_placeholder", {
+              min: MIN_PASSWORD_LENGTH,
+            })}
             placeholderTextColor={colors.textFaint}
             value={password}
             onChangeText={setPassword}
@@ -158,7 +162,7 @@ export default function RegisterScreen({ navigation }) {
             editable={!loading}
           />
 
-          <Text style={styles.label}>عاود كلمة السر</Text>
+          <Text style={styles.label}>{t("auth.register.password_confirm")}</Text>
           <TextInput
             style={styles.input}
             placeholder="••••••••"
@@ -181,10 +185,12 @@ export default function RegisterScreen({ navigation }) {
             {loading ? (
               <View style={styles.buttonLoading}>
                 <ActivityIndicator color={colors.onPrimary} />
-                <Text style={styles.buttonLoadingText}>كنصاوبو الحساب…</Text>
+                <Text style={styles.buttonLoadingText}>
+                  {t("auth.register.submitting")}
+                </Text>
               </View>
             ) : (
-              <Text style={styles.buttonText}>إنشاء الحساب • Create</Text>
+              <Text style={styles.buttonText}>{t("auth.register.submit")}</Text>
             )}
           </TouchableOpacity>
 
@@ -193,8 +199,8 @@ export default function RegisterScreen({ navigation }) {
             onPress={() => navigation.navigate("Login")}
             disabled={loading}
           >
-            <Text style={styles.linkMuted}>عندك حساب من قبل؟ </Text>
-            <Text style={styles.link}>دخول</Text>
+            <Text style={styles.linkMuted}>{t("auth.register.has_account")}</Text>
+            <Text style={styles.link}>{t("auth.register.login_link")}</Text>
           </TouchableOpacity>
         </ScrollView>
       </KeyboardAvoidingView>
