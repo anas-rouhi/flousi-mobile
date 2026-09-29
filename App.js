@@ -14,6 +14,7 @@ import {
 import { NavigationContainer } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import ErrorBoundary from "./src/components/common/ErrorBoundary";
+import WebShell from "./src/components/common/WebShell";
 import { AppLockProvider } from "./src/context/AppLockContext";
 import { AuthProvider, useAuth } from "./src/context/AuthContext";
 import { LocaleProvider, useLocale } from "./src/context/LocaleContext";
@@ -29,6 +30,13 @@ import OnboardingScreen from "./src/screens/OnboardingScreen";
 import RegisterScreen from "./src/screens/RegisterScreen";
 
 const Stack = createNativeStackNavigator();
+
+/**
+ * The browser tab keeps the brand title on every screen. Without a formatter
+ * React Navigation renames the tab after each route ("Home", "Login"…).
+ */
+const WEB_TITLE = "FLOUSI — فين مشات فلوسي؟";
+const documentTitle = { formatter: () => WEB_TITLE };
 
 /**
  * Deep links, used only by the password reset email so far.
@@ -163,7 +171,11 @@ function ThemedApp() {
         <ServerConnectProvider>
           {/* Face ID / fingerprint gate; covers the navigator and any open sheet. */}
           <AppLockProvider>
-            <NavigationContainer theme={navigationTheme} linking={linking}>
+            <NavigationContainer
+              theme={navigationTheme}
+              linking={linking}
+              documentTitle={documentTitle}
+            >
               <RootNavigator />
             </NavigationContainer>
           </AppLockProvider>
@@ -179,10 +191,13 @@ export default function App() {
     <ErrorBoundary>
       <SafeAreaProvider>
         <ThemeProvider>
-          {/* Locale sits inside Theme so directional styling can read themes. */}
-          <LocaleProvider>
-            <ThemedApp />
-          </LocaleProvider>
+          {/* Desktop browsers get a centred column; elsewhere it renders nothing. */}
+          <WebShell>
+            {/* Locale sits inside Theme so directional styling can read themes. */}
+            <LocaleProvider>
+              <ThemedApp />
+            </LocaleProvider>
+          </WebShell>
         </ThemeProvider>
       </SafeAreaProvider>
     </ErrorBoundary>

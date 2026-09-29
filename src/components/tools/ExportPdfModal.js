@@ -1,12 +1,13 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
-  Modal,
+  Platform,
   StyleSheet,
   Text,
   TouchableOpacity,
   View,
 } from "react-native";
+import Modal from "../../platform/Modal";
 import * as Print from "expo-print";
 import * as Sharing from "expo-sharing";
 import DirectionalIcon from "../ui/DirectionalIcon";
@@ -15,6 +16,7 @@ import { useAuth } from "../../context/AuthContext";
 import { useLocale } from "../../context/LocaleContext";
 import { useTheme, useThemedStyles } from "../../context/ThemeContext";
 import { useI18n } from "../../i18n";
+import { printHtml } from "../../platform/browserFiles";
 import { describeApiError } from "../../services/api";
 import { fetchMonthlyAnalytics } from "../../services/analytics";
 import { primeCategoryCatalog } from "../../services/categories";
@@ -115,15 +117,22 @@ export default function ExportPdfModal({ visible, onClose, initialPeriod }) {
         language,
         t,
       });
+      const fileTitle = t("pdf.share_title", { period: periodLabel });
+      if (Platform.OS === "web") {
+        // The browser's print dialog, where "Save as PDF" is the destination.
+        await printHtml(html, { title: fileTitle });
+        successFeedback();
+        return;
+      }
       const { uri } = await Print.printToFileAsync({ html, ...A4 });
       if (await Sharing.isAvailableAsync()) {
         await Sharing.shareAsync(uri, {
           mimeType: "application/pdf",
           UTI: "com.adobe.pdf",
-          dialogTitle: t("pdf.share_title", { period: periodLabel }),
+          dialogTitle: fileTitle,
         });
       } else {
-        // No share target (web, some emulators): the print dialog can still save it.
+        // No share target (some emulators): the print dialog can still save it.
         await Print.printAsync({ uri });
       }
       successFeedback();
@@ -244,7 +253,9 @@ export default function ExportPdfModal({ visible, onClose, initialPeriod }) {
                 <Text style={styles.primaryText}>{t("pdf.generating")}</Text>
               </View>
             ) : (
-              <Text style={styles.primaryText}>{t("pdf.export")}</Text>
+              <Text style={styles.primaryText}>
+                {t(Platform.OS === "web" ? "pdf.export_web" : "pdf.export")}
+              </Text>
             )}
           </TouchableOpacity>
         </View>

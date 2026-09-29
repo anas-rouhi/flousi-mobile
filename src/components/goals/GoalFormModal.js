@@ -4,13 +4,13 @@ import {
   Text,
   TextInput,
   StyleSheet,
-  Modal,
   ScrollView,
   TouchableOpacity,
   ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
 } from "react-native";
+import Modal from "../../platform/Modal";
 import { fontSizes, radii, spacing } from "../../constants/theme";
 import { useTheme, useThemedStyles } from "../../context/ThemeContext";
 import { CURRENCIES, useI18n } from "../../i18n";

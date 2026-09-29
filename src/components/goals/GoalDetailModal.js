@@ -3,10 +3,10 @@ import {
   View,
   Text,
   StyleSheet,
-  Modal,
   TouchableOpacity,
   ActivityIndicator,
 } from "react-native";
+import Modal from "../../platform/Modal";
 import { fontSizes, radii, spacing } from "../../constants/theme";
 import { useTheme, useThemedStyles } from "../../context/ThemeContext";
 import { useI18n } from "../../i18n";

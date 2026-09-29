@@ -1,4 +1,4 @@
-import * as SecureStore from "expo-secure-store";
+import * as SecureStore from "../platform/storage";
 
 /**
  * Whether the user has already seen the pre-auth presentation screen.

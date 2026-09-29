@@ -1,5 +1,5 @@
 import { I18nManager } from "react-native";
-import * as SecureStore from "expo-secure-store";
+import * as SecureStore from "../platform/storage";
 import {
   DEFAULT_LANGUAGE,
   LANGUAGES,

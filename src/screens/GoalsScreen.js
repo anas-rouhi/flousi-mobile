@@ -7,10 +7,10 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   RefreshControl,
-  Alert,
   Animated,
   Platform,
 } from "react-native";
+import { Alert } from "../platform/alert";
 import { SafeAreaView } from "react-native-safe-area-context";
 import ContributeModal from "../components/goals/ContributeModal";
 import GoalCard from "../components/goals/GoalCard";

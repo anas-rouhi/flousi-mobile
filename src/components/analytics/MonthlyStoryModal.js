@@ -4,14 +4,15 @@ import {
   Animated,
   Dimensions,
   Easing,
-  Modal,
   PanResponder,
+  Platform,
   Share,
   StyleSheet,
   Text,
   TouchableOpacity,
   View,
 } from "react-native";
+import Modal from "../../platform/Modal";
 import * as Sharing from "expo-sharing";
 import { captureRef } from "react-native-view-shot";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -19,6 +20,7 @@ import { categoryGlyph } from "../../constants/categoryIcons";
 import { useLocale } from "../../context/LocaleContext";
 import { useI18n } from "../../i18n";
 import { getLocale } from "../../i18n/store";
+import { downloadUrl } from "../../platform/browserFiles";
 import { describeApiError } from "../../services/api";
 import { fetchMonthlyAnalytics } from "../../services/analytics";
 import { primeCategoryCatalog } from "../../services/categories";
@@ -343,6 +345,13 @@ export default function MonthlyStoryModal({ visible, onClose, period, analytics:
       expense: story.expenseText,
     });
     try {
+      if (Platform.OS === "web") {
+        // No share sheet on most desktops: the story card downloads as a PNG.
+        const dataUrl = await captureRef(cardRef, { format: "png", quality: 1, result: "data-uri" });
+        downloadUrl(dataUrl, `FLOUSI-${String(story.monthLabel).replace(/\s+/g, "-")}.png`);
+        successFeedback();
+        return;
+      }
       const uri = await captureRef(cardRef, { format: "png", quality: 1, result: "tmpfile" });
       if (await Sharing.isAvailableAsync()) {
         await Sharing.shareAsync(uri, {

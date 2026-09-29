@@ -5,12 +5,12 @@ import {
   TextInput,
   StyleSheet,
   ScrollView,
-  Modal,
   TouchableOpacity,
   ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
 } from "react-native";
+import Modal from "../platform/Modal";
 import { describeApiError, describeValidationError } from "../services/api";
 import { useAuth } from "../context/AuthContext";
 import { useTheme, useThemedStyles } from "../context/ThemeContext";

@@ -10,12 +10,12 @@ import React, {
 import {
   ActivityIndicator,
   AppState,
-  Modal,
   StyleSheet,
   Text,
   TouchableOpacity,
   View,
 } from "react-native";
+import Modal from "../platform/Modal";
 import { useAuth } from "./AuthContext";
 import { useTheme, useThemedStyles } from "./ThemeContext";
 import { useI18n } from "../i18n";

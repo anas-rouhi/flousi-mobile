@@ -4,12 +4,13 @@ import {
   Easing,
   Image,
   Linking,
-  Modal,
+  Platform,
   StyleSheet,
   Text,
   TouchableOpacity,
   View,
 } from "react-native";
+import Modal from "../../platform/Modal";
 import * as ImagePicker from "expo-image-picker";
 import { fontSizes, radii, spacing } from "../../constants/theme";
 import { useLocale } from "../../context/LocaleContext";
@@ -154,7 +155,9 @@ export default function ReceiptScannerModal({ visible, onClose, onScanned, curre
     async (source) => {
       tapFeedback();
       try {
-        if (source === "camera") {
+        // In a browser both pickers are a file input (the camera one hints
+        // `capture` to phones), so there is no native permission to ask for.
+        if (source === "camera" && Platform.OS !== "web") {
           const permission = await ImagePicker.requestCameraPermissionsAsync();
           if (!permission.granted) {
             setStage("denied");

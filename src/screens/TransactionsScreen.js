@@ -8,8 +8,8 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   RefreshControl,
-  Alert,
 } from "react-native";
+import { Alert } from "../platform/alert";
 import { SafeAreaView } from "react-native-safe-area-context";
 import AddTransactionModal from "../components/AddTransactionModal";
 import QuickActionButton from "../components/home/QuickActionButton";

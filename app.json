@@ -26,6 +26,13 @@
       }
     },
     "web": {
+      "bundler": "metro",
+      "output": "single",
+      "name": "FLOUSI — فين مشات فلوسي؟",
+      "shortName": "FLOUSI",
+      "lang": "ar",
+      "themeColor": "#0A5C36",
+      "backgroundColor": "#F8F9FA",
       "favicon": "./assets/favicon.png"
     },
     "plugins": [

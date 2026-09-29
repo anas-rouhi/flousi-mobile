@@ -1,4 +1,4 @@
-import * as SecureStore from "expo-secure-store";
+import * as SecureStore from "../platform/storage";
 
 /**
  * Exchange rates for the converter: MAD against EUR, USD, SAR and gold.

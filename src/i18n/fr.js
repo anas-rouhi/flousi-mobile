@@ -545,6 +545,7 @@ export default {
     title: "Rapport PDF 📄",
     subtitle: "Choisissez un mois et obtenez un rapport soigné à envoyer ou garder",
     export: "Exporter et partager le PDF",
+    export_web: "Imprimer ou enregistrer en PDF 🖨️",
     generating: "Création du rapport…",
     failed: "Impossible de créer le PDF, réessayez",
     share_title: "Rapport FLOUSI — {period}",

@@ -1,5 +1,6 @@
 import React from "react";
-import { Modal, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import Modal from "../../platform/Modal";
 import { fontSizes, radii, spacing } from "../../constants/theme";
 import { useLocale } from "../../context/LocaleContext";
 import { useThemedStyles } from "../../context/ThemeContext";

@@ -6,10 +6,11 @@ import {
   ScrollView,
   TouchableOpacity,
   ActivityIndicator,
-  Alert,
   Animated,
   Switch,
+  Platform,
 } from "react-native";
+import { Alert } from "../platform/alert";
 import { SafeAreaView } from "react-native-safe-area-context";
 import ChangePasswordModal from "../components/settings/ChangePasswordModal";
 import { Card, CardHeader } from "../components/ui/Card";
@@ -397,22 +398,26 @@ export default function SettingsScreen() {
         {/* Security */}
         <Card>
           <CardHeader title={t("settings.security")} />
-          <View style={styles.switchRow}>
-            <View style={styles.rowMain}>
-              <Text style={styles.rowLabel}>{t("settings.biometric_lock")}</Text>
-              <Text style={styles.rowHint}>{t("settings.biometric_lock_hint")}</Text>
+          {/* Browsers have no Face ID / fingerprint API here: the password
+              sign-in is the web build's only gate. */}
+          {Platform.OS !== "web" ? (
+            <View style={styles.switchRow}>
+              <View style={styles.rowMain}>
+                <Text style={styles.rowLabel}>{t("settings.biometric_lock")}</Text>
+                <Text style={styles.rowHint}>{t("settings.biometric_lock_hint")}</Text>
+              </View>
+              {lockBusy ? (
+                <ActivityIndicator size="small" color={colors.primary} />
+              ) : (
+                <Switch
+                  value={lockEnabled}
+                  onValueChange={toggleLock}
+                  trackColor={{ true: colors.primary, false: colors.border }}
+                  accessibilityLabel={t("settings.biometric_lock")}
+                />
+              )}
             </View>
-            {lockBusy ? (
-              <ActivityIndicator size="small" color={colors.primary} />
-            ) : (
-              <Switch
-                value={lockEnabled}
-                onValueChange={toggleLock}
-                trackColor={{ true: colors.primary, false: colors.border }}
-                accessibilityLabel={t("settings.biometric_lock")}
-              />
-            )}
-          </View>
+          ) : null}
           <TouchableOpacity
             style={styles.action}
             onPress={() => setPasswordVisible(true)}

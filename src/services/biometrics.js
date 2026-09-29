@@ -1,5 +1,6 @@
+import { Platform } from "react-native";
 import * as LocalAuthentication from "expo-local-authentication";
-import * as SecureStore from "expo-secure-store";
+import * as SecureStore from "../platform/storage";
 
 /**
  * Face ID / Touch ID / fingerprint lock.
@@ -12,7 +13,13 @@ import * as SecureStore from "expo-secure-store";
  */
 const LOCK_KEY = "biometric_lock_enabled";
 
+/** No biometric API in the browser build; the lock simply does not exist there. */
+const SUPPORTED = Platform.OS !== "web";
+
 export async function isBiometricLockEnabled() {
+  if (!SUPPORTED) {
+    return false;
+  }
   try {
     return (await SecureStore.getItemAsync(LOCK_KEY)) === "1";
   } catch {
@@ -35,6 +42,9 @@ export async function setBiometricLockEnabled(enabled) {
  * "biometrics": "face" | "fingerprint" | "iris" | null.
  */
 export async function getBiometricCapability() {
+  if (!SUPPORTED) {
+    return { hardware: false, enrolled: false, kind: null };
+  }
   try {
     const [hardware, enrolled, types] = await Promise.all([
       LocalAuthentication.hasHardwareAsync(),

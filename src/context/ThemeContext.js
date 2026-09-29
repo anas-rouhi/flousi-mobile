@@ -8,7 +8,7 @@ import React, {
   useState,
 } from "react";
 import { Appearance } from "react-native";
-import * as SecureStore from "expo-secure-store";
+import * as SecureStore from "../platform/storage";
 import { palettes } from "../constants/theme";
 
 const THEME_KEY = "theme_mode";

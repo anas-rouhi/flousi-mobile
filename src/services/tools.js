@@ -1,3 +1,4 @@
+import { Platform } from "react-native";
 import api from "./api";
 import { sanitizeAmountInput } from "../utils/money";
 
@@ -55,18 +56,25 @@ function readReceiptDate(raw) {
  */
 export async function scanReceipt(image, { signal } = {}) {
   const type = image.mimeType || guessMimeType(image.uri);
+  const name = image.fileName || `receipt.${type.split("/")[1] || "jpg"}`;
   const form = new FormData();
-  // React Native's FormData takes a { uri, name, type } file descriptor.
-  form.append("image", {
-    uri: image.uri,
-    name: image.fileName || `receipt.${type.split("/")[1] || "jpg"}`,
-    type,
-  });
+
+  if (Platform.OS === "web") {
+    // A browser FormData needs real bytes. The picker hands over the File it
+    // read; failing that, its data:/blob: URI is fetched back into a Blob.
+    const file = image.file ?? (await (await fetch(image.uri)).blob());
+    form.append("image", file, name);
+  } else {
+    // React Native's FormData takes a { uri, name, type } file descriptor.
+    form.append("image", { uri: image.uri, name, type });
+  }
 
   const response = await api.post("/tools/scan-receipt", form, {
     signal,
     timeout: SCAN_TIMEOUT_MS,
-    headers: { "Content-Type": "multipart/form-data" },
+    // A browser must write the header itself: it carries the multipart
+    // boundary. Native needs it named explicitly.
+    headers: { "Content-Type": Platform.OS === "web" ? undefined : "multipart/form-data" },
     // Stop axios from JSON-encoding the form.
     transformRequest: (data) => data,
   });

@@ -1,5 +1,5 @@
 import axios from "axios";
-import * as SecureStore from "expo-secure-store";
+import * as SecureStore from "../platform/storage";
 import { getLanguage, t } from "../i18n/store";
 import { emitServerUnreachable } from "./serverEvents";
 import { emitUnauthorized } from "./sessionEvents";

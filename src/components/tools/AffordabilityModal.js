@@ -2,7 +2,6 @@ import React, { useEffect, useMemo, useRef, useState } from "react";
 import {
   Animated,
   KeyboardAvoidingView,
-  Modal,
   Platform,
   ScrollView,
   StyleSheet,
@@ -11,6 +10,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import Modal from "../../platform/Modal";
 import { fontSizes, radii, spacing } from "../../constants/theme";
 import { useLocale } from "../../context/LocaleContext";
 import { useTheme, useThemedStyles } from "../../context/ThemeContext";

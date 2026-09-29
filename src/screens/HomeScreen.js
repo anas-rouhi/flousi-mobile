@@ -7,9 +7,9 @@ import {
   ActivityIndicator,
   RefreshControl,
   TouchableOpacity,
-  Alert,
   Animated,
 } from "react-native";
+import { Alert } from "../platform/alert";
 import { SafeAreaView } from "react-native-safe-area-context";
 import AddTransactionModal from "../components/AddTransactionModal";
 import CreateAccountModal from "../components/accounts/CreateAccountModal";

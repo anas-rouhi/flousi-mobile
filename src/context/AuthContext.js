@@ -7,7 +7,7 @@ import React, {
   useRef,
   useState,
 } from "react";
-import { Alert } from "react-native";
+import { Alert } from "../platform/alert";
 import { t } from "../i18n/store";
 import {
   clearSession,

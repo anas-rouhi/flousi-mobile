@@ -1,4 +1,4 @@
-import * as SecureStore from "expo-secure-store";
+import * as SecureStore from "../platform/storage";
 import { zonedDayKey } from "../utils/date";
 import { fetchMonthlyAnalytics } from "./analytics";
 

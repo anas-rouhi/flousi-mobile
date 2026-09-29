@@ -1,4 +1,4 @@
-import * as SecureStore from "expo-secure-store";
+import * as SecureStore from "../platform/storage";
 import { getLanguage, t } from "../i18n/store";
 import api, { describeValidationError } from "./api";
 

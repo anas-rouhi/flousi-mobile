@@ -537,6 +537,7 @@ export default {
     title: "تقرير PDF 📄",
     subtitle: "ختار الشهر، ونوجدو ليك تقرير مرتب تقدر تسيفطو ولا تحفظو",
     export: "صدّر و بارطاجي PDF",
+    export_web: "طبع ولا حفظ PDF 🖨️",
     generating: "كنوجدو التقرير…",
     failed: "ما قدرناش نوجدو الـ PDF، عاود المحاولة",
     share_title: "تقرير FLOUSI — {period}",

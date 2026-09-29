@@ -543,6 +543,7 @@ export default {
     title: "PDF report 📄",
     subtitle: "Pick a month and get a clean report you can send or save",
     export: "Export & share PDF",
+    export_web: "Print or save as PDF 🖨️",
     generating: "Building your report…",
     failed: "Couldn't create the PDF, please try again",
     share_title: "FLOUSI report — {period}",
