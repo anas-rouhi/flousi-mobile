@@ -206,6 +206,21 @@ export function AuthProvider({ children }) {
     setUser(null);
   }, []);
 
+  /**
+   * Re-reads the profile, e.g. after the API host changed. A 401 is handled by
+   * the interceptor's sign-out; any other failure is just reported.
+   */
+  const refreshUser = useCallback(async () => {
+    if (!tokenRef.current) {
+      return null;
+    }
+    const fresh = await fetchMe();
+    if (fresh) {
+      setUser(fresh);
+    }
+    return fresh;
+  }, []);
+
   /** Called when the user leaves the landing page, so it is not forced again. */
   const completeOnboarding = useCallback(async () => {
     setOnboarded(true);
@@ -224,6 +239,7 @@ export function AuthProvider({ children }) {
       signOut,
       applyUser,
       forgetSession,
+      refreshUser,
       completeOnboarding,
     }),
     [
@@ -236,6 +252,7 @@ export function AuthProvider({ children }) {
       signOut,
       applyUser,
       forgetSession,
+      refreshUser,
       completeOnboarding,
     ],
   );

@@ -13,12 +13,21 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import AddTransactionModal from "../components/AddTransactionModal";
 import CreateAccountModal from "../components/accounts/CreateAccountModal";
+import MonthlyStoryModal from "../components/analytics/MonthlyStoryModal";
+import AffordabilityModal from "../components/tools/AffordabilityModal";
+import CurrencyConverterModal from "../components/tools/CurrencyConverterModal";
+import ExportPdfModal from "../components/tools/ExportPdfModal";
+import ReceiptScannerModal from "../components/tools/ReceiptScannerModal";
+import SplitBillModal from "../components/tools/SplitBillModal";
+import BadgesSheet from "../components/home/BadgesSheet";
+import StreakBadge from "../components/home/StreakBadge";
 import SetBudgetModal from "../components/budget/SetBudgetModal";
 import AccountsCarousel from "../components/home/AccountsCarousel";
 import BalanceCard from "../components/home/BalanceCard";
 import BudgetCard from "../components/home/BudgetCard";
 import CategoryBreakdownCard from "../components/home/CategoryBreakdownCard";
 import MonthFlowCard from "../components/home/MonthFlowCard";
+import PowerToolsGrid from "../components/home/PowerToolsGrid";
 import QuickActionButton from "../components/home/QuickActionButton";
 import RecentTransactionsList from "../components/home/RecentTransactionsList";
 import SmartInsightCard from "../components/home/SmartInsightCard";
@@ -28,12 +37,14 @@ import { useTheme, useThemedStyles } from "../context/ThemeContext";
 import { useAuth } from "../context/AuthContext";
 import { useAccounts } from "../hooks/useAccounts";
 import { useBudget } from "../hooks/useBudget";
+import { useStreak } from "../hooks/useStreak";
 import { describeApiError, isRetryableError } from "../services/api";
 import { primeCategoryCatalog } from "../services/categories";
 import { fetchDashboardStats } from "../services/stats";
 import { useI18n } from "../i18n";
 import { isolate } from "../utils/bidi";
-import { successFeedback } from "../utils/haptics";
+import { computeBadges } from "../utils/badges";
+import { successFeedback, tapFeedback } from "../utils/haptics";
 import { centimesOf } from "../utils/money";
 
 /** "Anas Rouhi" => "Anas" — the greeting stays short on narrow screens. */
@@ -62,7 +73,15 @@ export default function HomeScreen() {
   const [addVisible, setAddVisible] = useState(false);
   const [accountSheetVisible, setAccountSheetVisible] = useState(false);
   const [budgetSheetVisible, setBudgetSheetVisible] = useState(false);
+  const [badgesVisible, setBadgesVisible] = useState(false);
+  const [affordVisible, setAffordVisible] = useState(false);
+  const [storyVisible, setStoryVisible] = useState(false);
+  // Power tools: "scan" | "pdf" | "split" | "fx" | null — one sheet at a time.
+  const [openTool, setOpenTool] = useState(null);
+  const [addDraft, setAddDraft] = useState(null);
+  const handoffTimer = useRef(null);
   const [toast, setToast] = useState(null);
+  const { streak, reload: reloadStreak } = useStreak();
   const toastOpacity = useRef(new Animated.Value(0)).current;
 
   // The carousel needs the accounts themselves, so the dashboard now loads
@@ -125,7 +144,8 @@ export default function HomeScreen() {
     setRefreshing(true);
     load();
     reloadAccounts();
-  }, [load, reloadAccounts]);
+    reloadStreak();
+  }, [load, reloadAccounts, reloadStreak]);
 
   /** Fades a short confirmation in, holds it, then fades it back out. */
   const showToast = useCallback(
@@ -169,8 +189,10 @@ export default function HomeScreen() {
       );
       load();
       reloadAccounts();
+      // Logging today may have just extended the streak.
+      reloadStreak();
     },
-    [load, showToast, reloadAccounts, t],
+    [load, showToast, reloadAccounts, reloadStreak, t],
   );
 
   const handleAccountCreated = useCallback(
@@ -185,6 +207,18 @@ export default function HomeScreen() {
     },
     [load, showToast, reloadAccounts, t],
   );
+
+  /**
+   * Scanner → transaction form. iOS cannot present a modal while another is
+   * still sliding away, so the form opens once the scanner has left.
+   */
+  const handleReceiptScanned = useCallback((draft) => {
+    setOpenTool(null);
+    setAddDraft(draft);
+    clearTimeout(handoffTimer.current);
+    handoffTimer.current = setTimeout(() => setAddVisible(true), 450);
+  }, []);
+  useEffect(() => () => clearTimeout(handoffTimer.current), []);
 
   /**
    * The sheet stays open when saving fails, so the error it was handed is
@@ -228,15 +262,19 @@ export default function HomeScreen() {
   }, [signOut, t]);
 
   const greeting = firstName(user);
+  const badges = computeBadges({ streak, stats, budget });
 
   const header = (
     <View style={styles.header}>
       <View style={styles.headerText}>
-        <Text style={styles.greeting}>
-          {greeting
-            ? t("home.greeting", { name: isolate(greeting) })
-            : t("home.greeting_anonymous")}
-        </Text>
+        <View style={styles.greetingRow}>
+          <Text style={styles.greeting}>
+            {greeting
+              ? t("home.greeting", { name: isolate(greeting) })
+              : t("home.greeting_anonymous")}
+          </Text>
+          <StreakBadge streak={streak} onPress={() => setBadgesVisible(true)} />
+        </View>
         <Text style={styles.greetingSub}>{t("home.greeting_sub")}</Text>
       </View>
       <TouchableOpacity
@@ -305,7 +343,39 @@ export default function HomeScreen() {
           currency={currency}
         />
 
+        {/* Tools: the affordability check leads, the month's story follows. */}
+        <View style={styles.tools}>
+          <TouchableOpacity
+            style={[styles.toolChip, styles.toolChipPrimary]}
+            onPress={() => {
+              tapFeedback();
+              setAffordVisible(true);
+            }}
+            activeOpacity={0.85}
+            accessibilityRole="button"
+          >
+            <Text style={styles.toolChipPrimaryText} numberOfLines={1}>
+              {t("home.tools.afford")}
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.toolChip}
+            onPress={() => {
+              tapFeedback();
+              setStoryVisible(true);
+            }}
+            activeOpacity={0.85}
+            accessibilityRole="button"
+          >
+            <Text style={styles.toolChipText} numberOfLines={1}>
+              {t("home.tools.story")}
+            </Text>
+          </TouchableOpacity>
+        </View>
+
         <SmartInsightCard stats={stats} budget={budget} currency={currency} />
+
+        <PowerToolsGrid onOpen={setOpenTool} />
 
         <BudgetCard
           hasBudget={budget.hasBudget}
@@ -358,8 +428,12 @@ export default function HomeScreen() {
 
       <AddTransactionModal
         visible={addVisible}
-        onClose={() => setAddVisible(false)}
+        onClose={() => {
+          setAddVisible(false);
+          setAddDraft(null);
+        }}
         onCreated={handleTransactionCreated}
+        draft={addDraft}
       />
 
       <CreateAccountModal
@@ -377,6 +451,41 @@ export default function HomeScreen() {
         currency={budget.currency ?? currency}
         saving={budget.saving}
         error={budget.error}
+      />
+
+      <BadgesSheet
+        visible={badgesVisible}
+        onClose={() => setBadgesVisible(false)}
+        streak={streak}
+        badges={badges}
+      />
+
+      <AffordabilityModal
+        visible={affordVisible}
+        onClose={() => setAffordVisible(false)}
+        stats={stats}
+        budget={budget}
+        currency={currency}
+      />
+
+      <MonthlyStoryModal visible={storyVisible} onClose={() => setStoryVisible(false)} />
+
+      <ReceiptScannerModal
+        visible={openTool === "scan"}
+        onClose={() => setOpenTool(null)}
+        onScanned={handleReceiptScanned}
+        currency={currency}
+      />
+      <ExportPdfModal visible={openTool === "pdf"} onClose={() => setOpenTool(null)} />
+      <SplitBillModal
+        visible={openTool === "split"}
+        onClose={() => setOpenTool(null)}
+        currency={currency}
+      />
+      <CurrencyConverterModal
+        visible={openTool === "fx"}
+        onClose={() => setOpenTool(null)}
+        currency={currency}
       />
     </SafeAreaView>
   );
@@ -405,6 +514,43 @@ const createStyles = (colors) =>
     backgroundColor: colors.background,
   },
   headerText: { flexShrink: 1 },
+  greetingRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    flexWrap: "wrap",
+    gap: spacing.sm,
+  },
+  tools: {
+    flexDirection: "row",
+    gap: spacing.sm,
+    marginTop: spacing.md,
+  },
+  toolChip: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    minHeight: 46,
+    borderRadius: radii.lg,
+    borderWidth: 1.5,
+    borderColor: colors.primaryBorder,
+    backgroundColor: colors.surface,
+    paddingHorizontal: spacing.sm,
+  },
+  toolChipPrimary: {
+    flex: 1.3,
+    backgroundColor: colors.primary,
+    borderColor: colors.primary,
+  },
+  toolChipText: {
+    fontSize: fontSizes.body,
+    fontWeight: "700",
+    color: colors.primary,
+  },
+  toolChipPrimaryText: {
+    fontSize: fontSizes.body,
+    fontWeight: "800",
+    color: colors.onPrimary,
+  },
   greeting: {
     fontSize: fontSizes.title,
     fontWeight: "bold",

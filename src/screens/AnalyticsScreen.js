@@ -11,6 +11,8 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import CashflowCard from "../components/analytics/CashflowCard";
 import DirectionalIcon from "../components/ui/DirectionalIcon";
 import CategoryDistribution from "../components/analytics/CategoryDistribution";
+import MonthlyStoryModal from "../components/analytics/MonthlyStoryModal";
+import ExportPdfModal from "../components/tools/ExportPdfModal";
 import { AnalyticsSkeleton } from "../components/ui/Skeleton";
 import { fontSizes, radii, spacing } from "../constants/theme";
 import { useTheme, useThemedStyles } from "../context/ThemeContext";
@@ -19,25 +21,13 @@ import { fetchMonthlyAnalytics } from "../services/analytics";
 import { primeCategoryCatalog } from "../services/categories";
 import { useI18n } from "../i18n";
 import { ltr } from "../utils/bidi";
-import { formatMonthYear } from "../utils/date";
-
-/** The month the user is in, as the API counts them (1-12). */
-function currentPeriod() {
-  const now = new Date();
-  return { month: now.getMonth() + 1, year: now.getFullYear() };
-}
-
-function shiftMonth({ month, year }, delta) {
-  const zeroBased = month - 1 + delta;
-  return {
-    month: ((zeroBased % 12) + 12) % 12 + 1,
-    year: year + Math.floor(zeroBased / 12),
-  };
-}
-
-function isSameOrAfter(a, b) {
-  return a.year > b.year || (a.year === b.year && a.month >= b.month);
-}
+import {
+  currentPeriod,
+  formatMonthYear,
+  isSameOrAfterPeriod as isSameOrAfter,
+  shiftPeriod as shiftMonth,
+} from "../utils/date";
+import { tapFeedback } from "../utils/haptics";
 
 export default function AnalyticsScreen() {
   const { colors } = useTheme();
@@ -48,6 +38,8 @@ export default function AnalyticsScreen() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState(null);
+  const [storyVisible, setStoryVisible] = useState(false);
+  const [pdfVisible, setPdfVisible] = useState(false);
 
   const load = useCallback(
     async (period, { allowRetry = true } = {}) => {
@@ -151,11 +143,55 @@ export default function AnalyticsScreen() {
         >
           {error ? <Text style={styles.staleBanner}>{error}</Text> : null}
 
+          <TouchableOpacity
+            style={styles.storyCta}
+            onPress={() => {
+              tapFeedback();
+              setStoryVisible(true);
+            }}
+            activeOpacity={0.85}
+            accessibilityRole="button"
+          >
+            <Text style={styles.storyCtaGlyph}>🎬</Text>
+            <View style={styles.storyCtaBody}>
+              <Text style={styles.storyCtaTitle}>{t("analytics.story_cta")}</Text>
+              <Text style={styles.storyCtaSub}>
+                {formatMonthYear(selected.month, selected.year)}
+              </Text>
+            </View>
+            <DirectionalIcon glyph="›" style={styles.storyCtaArrow} />
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.pdfCta}
+            onPress={() => {
+              tapFeedback();
+              setPdfVisible(true);
+            }}
+            activeOpacity={0.85}
+            accessibilityRole="button"
+          >
+            <Text style={styles.pdfCtaText}>{t("analytics.export_pdf")}</Text>
+          </TouchableOpacity>
+
           <CashflowCard summary={analytics?.summary} />
           <CategoryDistribution categories={analytics?.categories} />
           <DailyTrend days={analytics?.daily_trend} />
         </ScrollView>
       )}
+
+      <MonthlyStoryModal
+        visible={storyVisible}
+        onClose={() => setStoryVisible(false)}
+        period={selected}
+        analytics={analytics}
+      />
+
+      <ExportPdfModal
+        visible={pdfVisible}
+        onClose={() => setPdfVisible(false)}
+        initialPeriod={selected}
+      />
     </SafeAreaView>
   );
 }
@@ -292,6 +328,43 @@ const createStyles = (colors) =>
     marginBottom: spacing.md,
     fontSize: fontSizes.meta,
   },
+
+  storyCta: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.md,
+    backgroundColor: colors.primary,
+    borderRadius: radii.xl,
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    marginBottom: spacing.lg,
+  },
+  storyCtaGlyph: { fontSize: 26 },
+  storyCtaBody: { flex: 1 },
+  storyCtaTitle: {
+    fontSize: fontSizes.bodyLarge,
+    fontWeight: "800",
+    color: colors.onPrimary,
+    textAlign: "auto",
+  },
+  storyCtaSub: {
+    fontSize: fontSizes.small,
+    color: colors.onPrimaryMuted,
+    textAlign: "auto",
+    marginTop: 2,
+  },
+  storyCtaArrow: { fontSize: 24, color: colors.onPrimary },
+  pdfCta: {
+    alignItems: "center",
+    borderRadius: radii.lg,
+    borderWidth: 1.5,
+    borderColor: colors.primaryBorder,
+    backgroundColor: colors.surface,
+    paddingVertical: 12,
+    marginTop: -spacing.sm,
+    marginBottom: spacing.lg,
+  },
+  pdfCtaText: { fontSize: fontSizes.body, fontWeight: "700", color: colors.primary },
 
   trendCard: {
     backgroundColor: colors.surface,

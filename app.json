@@ -32,11 +32,26 @@
       "expo-status-bar",
       "expo-secure-store",
       [
+        "expo-local-authentication",
+        {
+          "faceIDPermission": "FLOUSI uses Face ID to keep your finances locked when you leave the app."
+        }
+      ],
+      [
         "expo-splash-screen",
         {
           "image": "./assets/splash-icon.png",
           "resizeMode": "contain",
           "backgroundColor": "#ffffff"
+        }
+      ],
+      "expo-sharing",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "FLOUSI reads the receipt photos you choose to fill in your expenses.",
+          "cameraPermission": "FLOUSI uses the camera to scan your receipts.",
+          "microphonePermission": false
         }
       ]
     ]

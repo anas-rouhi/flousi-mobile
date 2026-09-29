@@ -14,8 +14,13 @@ import {
 import { NavigationContainer } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import ErrorBoundary from "./src/components/common/ErrorBoundary";
+import { AppLockProvider } from "./src/context/AppLockContext";
 import { AuthProvider, useAuth } from "./src/context/AuthContext";
 import { LocaleProvider, useLocale } from "./src/context/LocaleContext";
+import {
+  ServerConnectProvider,
+  useServerConnect,
+} from "./src/context/ServerConnectContext";
 import TabNavigator from "./src/navigation/TabNavigator";
 import LoginScreen from "./src/screens/LoginScreen";
 import ForgotPasswordScreen from "./src/screens/ForgotPasswordScreen";
@@ -57,6 +62,8 @@ function RootNavigator() {
   const { colors } = useTheme();
   const styles = useThemedStyles(createStyles);
   const { isAuthenticated, booting, onboarded, completeOnboarding } = useAuth();
+  // Bumped when the API host changes, so every screen remounts and refetches.
+  const { epoch } = useServerConnect();
 
   if (booting) {
     return (
@@ -68,6 +75,7 @@ function RootNavigator() {
 
   return (
     <Stack.Navigator
+      key={epoch}
       // A returning user who has already read the pitch lands straight on
       // Login, and can still reach the presentation from the link there.
       initialRouteName={
@@ -151,9 +159,15 @@ function ThemedApp() {
       <AuthProvider>
         {/* Inverted against the ground, so icons stay legible in both themes. */}
         <StatusBar style={isDark ? "light" : "dark"} />
-        <NavigationContainer theme={navigationTheme} linking={linking}>
-          <RootNavigator />
-        </NavigationContainer>
+        {/* Dev-only prompt to retarget the API when the LAN address changes. */}
+        <ServerConnectProvider>
+          {/* Face ID / fingerprint gate; covers the navigator and any open sheet. */}
+          <AppLockProvider>
+            <NavigationContainer theme={navigationTheme} linking={linking}>
+              <RootNavigator />
+            </NavigationContainer>
+          </AppLockProvider>
+        </ServerConnectProvider>
       </AuthProvider>
     </View>
   );

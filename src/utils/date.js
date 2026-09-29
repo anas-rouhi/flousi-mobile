@@ -209,3 +209,23 @@ export function formatTransactionDate(iso, timeZone, now = new Date()) {
   }
   return formatDay(parts);
 }
+
+/** The month the user is in, as the API counts them (1-12). */
+export function currentPeriod() {
+  const now = new Date();
+  return { month: now.getMonth() + 1, year: now.getFullYear() };
+}
+
+/** `{ month, year }` moved by `delta` months, across year boundaries. */
+export function shiftPeriod({ month, year }, delta) {
+  const zeroBased = month - 1 + delta;
+  return {
+    month: ((zeroBased % 12) + 12) % 12 + 1,
+    year: year + Math.floor(zeroBased / 12),
+  };
+}
+
+/** True when period `a` is the same month as `b` or later. */
+export function isSameOrAfterPeriod(a, b) {
+  return a.year > b.year || (a.year === b.year && a.month >= b.month);
+}

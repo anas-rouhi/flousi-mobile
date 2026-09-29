@@ -1,7 +1,7 @@
 import axios from "axios";
-import { NativeModules } from "react-native";
 import * as SecureStore from "expo-secure-store";
 import { getLanguage, t } from "../i18n/store";
+import { emitServerUnreachable } from "./serverEvents";
 import { emitUnauthorized } from "./sessionEvents";
 
 /**
@@ -14,65 +14,145 @@ import { emitUnauthorized } from "./sessionEvents";
  *
  * The value may be either a bare host ("http://10.0.0.5:8000") or a full API
  * root ("http://10.0.0.5:8000/api/v1"); both resolve to the same baseURL.
+ *
+ * On top of that, a host typed in the app (ServerConnectModal) is stored under
+ * CUSTOM_URL_KEY and wins over the bundled one, so switching Wi-Fi networks
+ * needs neither an .env edit nor a Metro restart.
  */
 const API_PREFIX = "/api/v1";
 const API_PORT = 8000;
+const CUSTOM_URL_KEY = "custom_api_base_url";
 
 /**
- * Last resort only. A hardcoded LAN address goes stale the moment the machine
- * joins another network — that is exactly what broke this app twice — so it
- * points at the loopback, which is right for simulators and web and obviously
- * wrong (rather than silently wrong) on a phone.
+ * Used whenever EXPO_PUBLIC_API_URL is missing. This is the dev machine's
+ * current LAN address; update it if that machine joins another network.
  */
-const FALLBACK_HOST = `http://localhost:${API_PORT}`;
+const FALLBACK_HOST = `http://192.168.110.104:${API_PORT}`;
 
 /**
- * The machine serving the JS bundle, taken from Metro's own script URL
- * ("http://192.168.110.135:8081/index.bundle?..."). In development the device
- * is by definition able to reach that address, so the API host tracks the LAN
- * IP automatically instead of needing an edit whenever the network changes.
- *
- * Empty in a production build, where EXPO_PUBLIC_API_URL is the real source.
+ * Turns whatever was typed into a clean host: adds the scheme when missing,
+ * assumes the backend's port when neither scheme nor port was given, and
+ * strips trailing slashes and the API prefix. Returns null for garbage.
  */
-function metroHost() {
-  const scriptURL = NativeModules?.SourceCode?.scriptURL;
-  if (typeof scriptURL !== "string") {
+export function normalizeHost(input) {
+  let value = String(input ?? "").trim().replace(/\/+$/, "");
+  if (value.endsWith(API_PREFIX)) {
+    value = value.slice(0, -API_PREFIX.length).replace(/\/+$/, "");
+  }
+  if (!value) {
     return null;
   }
-  const match = /^https?:\/\/([^/:]+)/.exec(scriptURL);
-  return match ? match[1] : null;
+  if (!/^https?:\/\//i.test(value)) {
+    // "192.168.1.55" -> "http://192.168.1.55:8000"
+    value = `http://${value}${/:\d+$/.test(value) ? "" : `:${API_PORT}`}`;
+  }
+  return /^https?:\/\/[^\s/:]+(:\d+)?$/i.test(value) ? value : null;
 }
 
-function resolveBaseUrl() {
-  // Explicit configuration always wins.
-  const configured = process.env.EXPO_PUBLIC_API_URL?.trim();
+/** The host baked into the bundle: .env first, then the hard-coded LAN IP. */
+export const DEFAULT_API_HOST =
+  normalizeHost(process.env.EXPO_PUBLIC_API_URL) || FALLBACK_HOST;
 
-  const derived = configured
-    ? configured
-    : metroHost()
-      ? `http://${metroHost()}:${API_PORT}`
-      : FALLBACK_HOST;
+const toBaseUrl = (host) => `${host}${API_PREFIX}`;
 
-  const host = derived.replace(/\/+$/, "");
-  return host.endsWith(API_PREFIX) ? host : `${host}${API_PREFIX}`;
-}
-
-export const API_BASE_URL = resolveBaseUrl();
+let currentHost = DEFAULT_API_HOST;
 
 const api = axios.create({
-  baseURL: API_BASE_URL,
-  // Generous for local development: a cold Laravel boot over the LAN, behind a
-  // tunnel, or on a first Metro-warmed request can easily outrun a tighter budget.
-  timeout: 30000,
+  baseURL: toBaseUrl(currentHost),
+  // Short on purpose: an unreachable host should fail fast with a visible error
+  // rather than leave the user on a spinner.
+  timeout: 8000,
   headers: {
     "Content-Type": "application/json",
     Accept: "application/json",
   },
 });
 
+/**
+ * Reads the stored override once, at import time. Every request awaits it (see
+ * the request interceptor), so nothing boots against the bundled host when an
+ * override exists.
+ */
+const storedHostLoaded = SecureStore.getItemAsync(CUSTOM_URL_KEY)
+  .then((stored) => {
+    const host = normalizeHost(stored);
+    if (host) {
+      currentHost = host;
+      api.defaults.baseURL = toBaseUrl(host);
+    }
+  })
+  .catch((error) => {
+    console.log("Stored API URL read failed:", error.message);
+  });
+
+/** Resolves once the stored override (if any) has been applied. */
+export function apiHostReady() {
+  return storedHostLoaded;
+}
+
+/** The host requests currently go to, without the /api/v1 prefix. */
+export function getApiHost() {
+  return currentHost;
+}
+
+/** True when the host was typed in the app rather than bundled. */
+export function isCustomApiHost() {
+  return currentHost !== DEFAULT_API_HOST;
+}
+
+/**
+ * Points the app at another backend, immediately and persistently: the very
+ * next request uses it. Passing nothing (or the bundled host) forgets the
+ * override. Returns the host now in use; throws "invalid_url" for garbage.
+ */
+export async function setApiBaseUrl(newUrl) {
+  const host = newUrl ? normalizeHost(newUrl) : DEFAULT_API_HOST;
+  if (!host) {
+    throw new Error("invalid_url");
+  }
+  // A late stored read must not overwrite what was just chosen.
+  await storedHostLoaded;
+  currentHost = host;
+  api.defaults.baseURL = toBaseUrl(host);
+  networkFailures = 0;
+  try {
+    if (host === DEFAULT_API_HOST) {
+      await SecureStore.deleteItemAsync(CUSTOM_URL_KEY);
+    } else {
+      await SecureStore.setItemAsync(CUSTOM_URL_KEY, host);
+    }
+  } catch (error) {
+    // Still applied for this session; only the next cold start loses it.
+    console.log("Stored API URL write failed:", error.message);
+  }
+  return host;
+}
+
+/**
+ * Asks the current host for any HTTP answer. A 401 counts as reachable: it
+ * proves the backend is listening there, which is all a URL check needs.
+ */
+export async function pingApi() {
+  try {
+    await api.get("/me", { timeout: 5000 });
+    return true;
+  } catch (error) {
+    return Boolean(error?.response);
+  }
+}
+
 // Auto-attach Sanctum Bearer Token to every request
 api.interceptors.request.use(
   async (config) => {
+    await storedHostLoaded;
+    // Axios merged the defaults in before this ran, possibly while the stored
+    // host was still loading; a retried config also carries its old host.
+    config.baseURL = api.defaults.baseURL;
+    console.log(
+      "🚀 [API OUTGOING]:",
+      config.method?.toUpperCase(),
+      `${config.baseURL}${config.url}`,
+    );
     const token = await SecureStore.getItemAsync("user_token");
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
@@ -100,6 +180,31 @@ export function isRetryableError(error) {
 }
 
 /**
+ * Consecutive requests that never reached the server. One blip is not worth a
+ * prompt; two in a row (a call plus its retry, or two screens loading) means
+ * the host is wrong or down. `/me` is the boot check, so it prompts alone.
+ */
+const UNREACHABLE_THRESHOLD = 2;
+let networkFailures = 0;
+
+function trackNetworkFailure(error) {
+  if (error?.response) {
+    networkFailures = 0; // The server answered, even if unhappily.
+    return;
+  }
+  if (axios.isCancel(error)) {
+    return;
+  }
+  // No response at all: ERR_NETWORK on device, ECONNREFUSED and friends
+  // elsewhere, ECONNABORTED on timeout.
+  networkFailures += 1;
+  const url = error?.config?.url || "";
+  if (networkFailures >= UNREACHABLE_THRESHOLD || url === "/me") {
+    emitServerUnreachable({ host: currentHost, url });
+  }
+}
+
+/**
  * The only endpoints that are reachable without a token. A 401 from one of
  * these is a verdict on the submitted credentials, not on a stored session, so
  * it must never trigger a sign-out.
@@ -115,8 +220,12 @@ const UNAUTHENTICATED_ROUTES = ["/auth/login", "/auth/register"];
  * returns them to Login, because the gate is driven by the auth state itself.
  */
 api.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    networkFailures = 0;
+    return response;
+  },
   (error) => {
+    trackNetworkFailure(error);
     const status = error?.response?.status;
     const url = error?.config?.url || "";
     const isEntryPoint = UNAUTHENTICATED_ROUTES.some((route) =>

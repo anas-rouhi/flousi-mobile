@@ -47,6 +47,24 @@ export function destructiveFeedback() {
   fire(() => Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium));
 }
 
+/** A caution, not a failure — "you can, but careful". */
+export function warningFeedback() {
+  fire(() =>
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning),
+  );
+}
+
+/**
+ * A firm "no": the error pattern followed by a heavy knock, so it cannot be
+ * mistaken for the lighter warning.
+ */
+export function dangerFeedback() {
+  fire(() => Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error));
+  setTimeout(() => {
+    fire(() => Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy));
+  }, 140);
+}
+
 /** Something failed. Used sparingly: a buzz on every validation slip nags. */
 export function errorFeedback() {
   fire(() => Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error));

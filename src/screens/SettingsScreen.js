@@ -8,14 +8,19 @@ import {
   ActivityIndicator,
   Alert,
   Animated,
+  Switch,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import ChangePasswordModal from "../components/settings/ChangePasswordModal";
 import { Card, CardHeader } from "../components/ui/Card";
 import { fontSizes, radii, spacing } from "../constants/theme";
 import { useTheme, useThemedStyles } from "../context/ThemeContext";
+import { useAppLock } from "../context/AppLockContext";
 import { useAuth } from "../context/AuthContext";
 import { useLocale } from "../context/LocaleContext";
+import { useServerConnect } from "../context/ServerConnectContext";
+import DirectionalIcon from "../components/ui/DirectionalIcon";
+import { getApiHost } from "../services/api";
 import { useI18n } from "../i18n";
 import {
   deleteAccount,
@@ -52,6 +57,7 @@ export default function SettingsScreen() {
   const styles = useThemedStyles(createStyles);
   const { user, signOut, applyUser, forgetSession } = useAuth();
   const { setLanguage } = useLocale();
+  const { openServerSettings } = useServerConnect();
   const { t, language, languages } = useI18n();
 
   const [signingOut, setSigningOut] = useState(false);
@@ -59,6 +65,8 @@ export default function SettingsScreen() {
   const [syncNotice, setSyncNotice] = useState(null);
   const [passwordVisible, setPasswordVisible] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const { enabled: lockEnabled, setEnabled: setLockEnabled } = useAppLock();
+  const [lockBusy, setLockBusy] = useState(false);
 
   const [toast, setToast] = useState(null);
   const toastOpacity = useRef(new Animated.Value(0)).current;
@@ -146,6 +154,29 @@ export default function SettingsScreen() {
       }
     }
   }, [user?.timezone, saving, applyUser, showToast, t]);
+
+  /**
+   * The switch only moves once the scan succeeds — see AppLockProvider. A
+   * cancelled prompt leaves it where it was without comment.
+   */
+  const toggleLock = useCallback(
+    async (next) => {
+      if (lockBusy) {
+        return;
+      }
+      setLockBusy(true);
+      const result = await setLockEnabled(next);
+      if (mounted.current) {
+        setLockBusy(false);
+      }
+      if (result.ok) {
+        showToast(next ? t("settings.biometric_on") : t("settings.biometric_off"));
+      } else if (result.reason === "unavailable") {
+        Alert.alert(t("settings.biometric_lock"), t("settings.biometric_unavailable"));
+      }
+    },
+    [lockBusy, setLockEnabled, showToast, t],
+  );
 
   const confirmSignOut = useCallback(() => {
     Alert.alert(t("session.sign_out"), t("session.sign_out_confirm"), [
@@ -366,6 +397,22 @@ export default function SettingsScreen() {
         {/* Security */}
         <Card>
           <CardHeader title={t("settings.security")} />
+          <View style={styles.switchRow}>
+            <View style={styles.rowMain}>
+              <Text style={styles.rowLabel}>{t("settings.biometric_lock")}</Text>
+              <Text style={styles.rowHint}>{t("settings.biometric_lock_hint")}</Text>
+            </View>
+            {lockBusy ? (
+              <ActivityIndicator size="small" color={colors.primary} />
+            ) : (
+              <Switch
+                value={lockEnabled}
+                onValueChange={toggleLock}
+                trackColor={{ true: colors.primary, false: colors.border }}
+                accessibilityLabel={t("settings.biometric_lock")}
+              />
+            )}
+          </View>
           <TouchableOpacity
             style={styles.action}
             onPress={() => setPasswordVisible(true)}
@@ -374,6 +421,27 @@ export default function SettingsScreen() {
             <Text style={styles.actionText}>{t("settings.change_password")}</Text>
           </TouchableOpacity>
         </Card>
+
+        {/* Developer — only in dev builds, where the backend lives on a LAN IP. */}
+        {__DEV__ ? (
+          <Card>
+            <CardHeader title={t("settings.developer")} />
+            <TouchableOpacity
+              style={styles.switchRow}
+              onPress={openServerSettings}
+              activeOpacity={0.8}
+              accessibilityRole="button"
+            >
+              <View style={styles.rowMain}>
+                <Text style={styles.rowLabel}>{t("settings.server_url")}</Text>
+                <Text style={[styles.rowHint, styles.ltrValue]} numberOfLines={1}>
+                  {getApiHost()}
+                </Text>
+              </View>
+              <DirectionalIcon glyph="›" style={styles.chevron} />
+            </TouchableOpacity>
+          </Card>
+        ) : null}
 
         {/* Account */}
         <Card>
@@ -485,6 +553,13 @@ const createStyles = (colors) =>
       borderTopWidth: StyleSheet.hairlineWidth,
       borderTopColor: colors.divider,
     },
+    switchRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
+      gap: spacing.md,
+      marginBottom: spacing.sm,
+    },
     rowMain: { flexShrink: 1 },
     rowLabel: {
       fontSize: fontSizes.body,
@@ -497,6 +572,9 @@ const createStyles = (colors) =>
       textAlign: "auto",
       marginTop: 2,
     },
+    // A URL reads left to right in every UI language.
+    ltrValue: { writingDirection: "ltr" },
+    chevron: { fontSize: 22, color: colors.textFaint },
     rowAction: {
       fontSize: fontSizes.meta,
       fontWeight: "600",

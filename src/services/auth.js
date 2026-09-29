@@ -61,7 +61,7 @@ export class SessionPersistError extends Error {
  *
  * The verification matters because the axios request interceptor reads the
  * token out of SecureStore on *every* call. If a write silently failed, later
- * requests would go out unauthenticated and stall until the 30s timeout instead
+ * requests would go out unauthenticated and stall until the request timeout instead
  * of failing fast — so nothing downstream is told the session exists until the
  * token is provably readable.
  *

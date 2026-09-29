@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   View,
   Text,
@@ -17,6 +17,7 @@ import { useTheme, useThemedStyles } from "../context/ThemeContext";
 import { useAccounts } from "../hooks/useAccounts";
 import { useI18n } from "../i18n";
 import { defaultCashAccountName } from "../services/accounts";
+import { isAiEndpointMissing, parseTransaction } from "../services/ai";
 import { fetchCategories } from "../services/categories";
 import { createTransaction } from "../services/transactions";
 import { formatLocalDay } from "../utils/date";
@@ -29,6 +30,19 @@ import {
 import { ltr } from "../utils/bidi";
 import { categoryName } from "../utils/categories";
 import { fixedLtrRow } from "../utils/rtl";
+import { successFeedback } from "../utils/haptics";
+
+/** Quiet time after the last keystroke before the quick-add text is parsed. */
+const AI_DEBOUNCE_MS = 600;
+/** Shorter than "taxi 5" is not worth a round trip. */
+const AI_MIN_LENGTH = 3;
+/** The line under the bar, per parse state; "idle" and "parsing" show none. */
+const AI_STATUS_KEYS = {
+  filled: "add_transaction.ai.filled",
+  unclear: "add_transaction.ai.unclear",
+  unavailable: "add_transaction.ai.unavailable",
+  error: "add_transaction.ai.error",
+};
 
 /** Local midnight-anchored day key, for comparing calendar days safely. */
 function dayKey(date) {
@@ -61,7 +75,13 @@ function toTransactionDate(day) {
   return noon.toISOString();
 }
 
-export default function AddTransactionModal({ visible, onClose, onCreated }) {
+/**
+ * @param {object} props
+ * @param {{ type?, amount?, description?, categoryId?, date? }} [props.draft]
+ *   values to open with (the receipt scanner's result). Read once per open;
+ *   anything missing keeps the form's default.
+ */
+export default function AddTransactionModal({ visible, onClose, onCreated, draft }) {
   const { colors } = useTheme();
   const styles = useThemedStyles(createStyles);
   const { t } = useI18n();
@@ -77,6 +97,16 @@ export default function AddTransactionModal({ visible, onClose, onCreated }) {
   const [lookupError, setLookupError] = useState(null);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState(null);
+
+  // AI quick-add: "idle" | "parsing" | "filled" | "unclear" | "unavailable" | "error"
+  const [aiText, setAiText] = useState("");
+  const [aiStatus, setAiStatus] = useState("idle");
+  const aiTimer = useRef(null);
+  const aiRequest = useRef(null);
+  const aiLastParsed = useRef("");
+  // The parsed category, kept until the catalogue can confirm it — a parse can
+  // come back before categories have loaded, or before the type switch lands.
+  const aiCategoryHint = useRef(null);
 
   // Accounts (and the default selection) come from the shared hook, which also
   // owns the "no wallet yet" recovery. It only fetches while the sheet is open.
@@ -102,7 +132,28 @@ export default function AddTransactionModal({ visible, onClose, onCreated }) {
     setDescription("");
     setDay(startOfToday());
     setError(null);
+    clearTimeout(aiTimer.current);
+    aiRequest.current?.abort();
+    aiLastParsed.current = "";
+    aiCategoryHint.current = null;
+    setAiText("");
+    setAiStatus("idle");
   }, []);
+
+  // Nothing may land on a closed (or unmounted) sheet.
+  useEffect(() => {
+    if (!visible) {
+      clearTimeout(aiTimer.current);
+      aiRequest.current?.abort();
+    }
+  }, [visible]);
+  useEffect(
+    () => () => {
+      clearTimeout(aiTimer.current);
+      aiRequest.current?.abort();
+    },
+    [],
+  );
 
   /**
    * The whole category catalogue is loaded once per open — it is small, and
@@ -122,9 +173,32 @@ export default function AddTransactionModal({ visible, onClose, onCreated }) {
     }
   }, []);
 
+  // A ref, so a new draft object from the parent never resets an open form.
+  const draftRef = useRef(draft);
+  draftRef.current = draft;
+
   useEffect(() => {
     if (visible) {
       resetForm();
+      const initial = draftRef.current;
+      if (initial) {
+        if (initial.type === "expense" || initial.type === "income") {
+          setType(initial.type);
+        }
+        if (initial.amount) {
+          setAmount(sanitizeAmountInput(initial.amount));
+        }
+        if (initial.description) {
+          setDescription(initial.description);
+        }
+        if (initial.date instanceof Date && initial.date <= new Date()) {
+          const picked = new Date(initial.date.getTime());
+          picked.setHours(0, 0, 0, 0);
+          setDay(picked);
+        }
+        // Confirmed against the catalogue by the category effect below.
+        aiCategoryHint.current = initial.categoryId ?? null;
+      }
       loadCategories();
     }
   }, [visible, resetForm, loadCategories]);
@@ -145,11 +219,99 @@ export default function AddTransactionModal({ visible, onClose, onCreated }) {
   );
 
   // A category from the other type must not survive an expense/income switch.
+  // An AI-parsed category that the catalogue can now confirm is picked up here.
   useEffect(() => {
-    setCategoryId((current) =>
-      current && typeCategories.some((c) => c.id === current) ? current : null,
-    );
+    setCategoryId((current) => {
+      if (current && typeCategories.some((c) => c.id === current)) {
+        return current;
+      }
+      const hinted = aiCategoryHint.current;
+      const match =
+        hinted !== null && typeCategories.find((c) => String(c.id) === String(hinted));
+      return match ? match.id : null;
+    });
   }, [typeCategories]);
+
+  /**
+   * Sends the quick-add text to the parser and fills the form with whatever
+   * came back. Only fields the parser understood are touched; the rest keep
+   * what the user entered by hand. A newer keystroke aborts an older request.
+   */
+  const runAiParse = useCallback(
+    async (raw) => {
+      clearTimeout(aiTimer.current);
+      const text = raw.trim();
+      if (text.length < AI_MIN_LENGTH || text === aiLastParsed.current) {
+        return;
+      }
+      aiLastParsed.current = text;
+      aiRequest.current?.abort();
+      const controller = new AbortController();
+      aiRequest.current = controller;
+      setAiStatus("parsing");
+
+      try {
+        const parsed = await parseTransaction(text, { signal: controller.signal });
+        if (controller.signal.aborted) {
+          return;
+        }
+        if (!parsed.amount && !parsed.type && !parsed.categoryId) {
+          setAiStatus("unclear");
+          return;
+        }
+
+        if (parsed.type) {
+          setType(parsed.type);
+        }
+        if (parsed.amount) {
+          setAmount(parsed.amount);
+        }
+        if (parsed.description) {
+          setDescription(parsed.description);
+        }
+        if (parsed.categoryId !== null) {
+          aiCategoryHint.current = parsed.categoryId;
+          const parsedType = parsed.type || type;
+          const match = categories.find(
+            (c) => c.type === parsedType && String(c.id) === String(parsed.categoryId),
+          );
+          // Unconfirmed ids wait in the hint for the catalogue effect above.
+          setCategoryId(match ? match.id : null);
+        }
+        setError(null);
+        setAiStatus("filled");
+        successFeedback();
+      } catch (err) {
+        if (controller.signal.aborted || err?.code === "ERR_CANCELED") {
+          return;
+        }
+        // Let the same text be retried with the submit key.
+        aiLastParsed.current = "";
+        console.log("AI parse failed:", err.response?.data || err.message);
+        setAiStatus(isAiEndpointMissing(err) ? "unavailable" : "error");
+      }
+    },
+    [categories, type],
+  );
+
+  const onAiChange = useCallback(
+    (text) => {
+      setAiText(text);
+      clearTimeout(aiTimer.current);
+      if (text.trim().length < AI_MIN_LENGTH) {
+        aiRequest.current?.abort();
+        aiLastParsed.current = "";
+        setAiStatus("idle");
+        return;
+      }
+      aiTimer.current = setTimeout(() => runAiParse(text), AI_DEBOUNCE_MS);
+    },
+    [runAiParse],
+  );
+
+  const clearAi = useCallback(() => {
+    onAiChange("");
+  }, [onAiChange]);
 
   const currency = selectedAccount?.currency || "MAD";
   const centimes = amountToCentimes(amount);
@@ -231,6 +393,50 @@ export default function AddTransactionModal({ visible, onClose, onCreated }) {
               keyboardShouldPersistTaps="handled"
               showsVerticalScrollIndicator={false}
             >
+              {/* AI quick-add: free text in, form filled out. */}
+              <View
+                style={[
+                  styles.aiBar,
+                  aiStatus === "filled" && styles.aiBarFilled,
+                ]}
+              >
+                <Text style={styles.aiIcon}>✨</Text>
+                <TextInput
+                  style={styles.aiInput}
+                  value={aiText}
+                  onChangeText={onAiChange}
+                  onSubmitEditing={() => runAiParse(aiText)}
+                  placeholder={t("add_transaction.ai.placeholder")}
+                  placeholderTextColor={colors.textPlaceholder}
+                  returnKeyType="done"
+                  autoCorrect={false}
+                  maxLength={200}
+                  editable={!submitting}
+                  accessibilityLabel={t("add_transaction.ai.label")}
+                />
+                {aiStatus === "parsing" ? (
+                  <ActivityIndicator size="small" color={colors.primary} />
+                ) : aiText ? (
+                  <TouchableOpacity
+                    onPress={clearAi}
+                    hitSlop={10}
+                    accessibilityLabel={t("add_transaction.ai.clear")}
+                  >
+                    <Text style={styles.aiClear}>✕</Text>
+                  </TouchableOpacity>
+                ) : null}
+              </View>
+              {AI_STATUS_KEYS[aiStatus] ? (
+                <Text
+                  style={[
+                    styles.aiStatus,
+                    aiStatus === "filled" && styles.aiStatusFilled,
+                  ]}
+                >
+                  {t(AI_STATUS_KEYS[aiStatus])}
+                </Text>
+              ) : null}
+
               {/* Expense / Income segmented control */}
               <View style={styles.segment}>
                 <SegmentButton
@@ -342,7 +548,11 @@ export default function AddTransactionModal({ visible, onClose, onCreated }) {
                       key={category.id}
                       category={category}
                       active={category.id === categoryId}
-                      onPress={() => setCategoryId(category.id)}
+                      onPress={() => {
+                        // A manual pick overrides the parser for good.
+                        aiCategoryHint.current = null;
+                        setCategoryId(category.id);
+                      }}
                     />
                   ))}
                 </View>
@@ -531,11 +741,41 @@ const createStyles = (colors) =>
   headerTitle: { fontSize: 18, fontWeight: "bold", color: colors.text },
   close: { fontSize: 15, color: colors.textMuted, fontWeight: "600" },
 
+  aiBar: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: colors.primarySoft,
+    borderWidth: 1.5,
+    borderColor: colors.primaryBorder,
+    borderRadius: 14,
+    paddingHorizontal: 12,
+    minHeight: 48,
+  },
+  aiBarFilled: { borderColor: colors.primary },
+  aiIcon: { fontSize: 18, marginEnd: 8 },
+  aiInput: {
+    flex: 1,
+    fontSize: 15,
+    color: colors.text,
+    textAlign: "auto",
+    paddingVertical: 12,
+  },
+  aiClear: { fontSize: 15, color: colors.textMuted, paddingHorizontal: 4 },
+  aiStatus: {
+    fontSize: 12,
+    color: colors.textMuted,
+    textAlign: "auto",
+    marginTop: 6,
+    marginHorizontal: 4,
+  },
+  aiStatusFilled: { color: colors.primary, fontWeight: "600" },
+
   segment: {
     flexDirection: "row",
     backgroundColor: colors.surfaceSunken,
     borderRadius: 12,
     padding: 4,
+    marginTop: 16,
   },
   segmentButton: {
     flex: 1,
